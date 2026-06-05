@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ProductBoard Roadmap</title>
+<style>
+  :root { color-scheme: light; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f6f8; color: #1a1a2e; min-height: 100vh; }
+
+  .topnav { background: #fff; border-bottom: 1px solid #e2e4ea; padding: 12px 20px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
+  .topnav-left { display: flex; align-items: center; gap: 10px; }
+  .logo { width: 28px; height: 28px; background: linear-gradient(135deg, #f96a38 0%, #e94e77 100%); border-radius: 7px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 13px; flex-shrink: 0; }
+  .topnav h1 { font-size: 15px; font-weight: 600; color: #1a1a2e; }
+  .topnav-right { display: flex; align-items: center; gap: 10px; }
+  .search-input { padding: 7px 12px; border: 1px solid #e2e4ea; border-radius: 7px; font-size: 13px; color: #1a1a2e; background: #f9fafb; outline: none; width: 220px; }
+  .search-input:focus { border-color: #f96a38; background: #fff; }
+  .btn { display: flex; align-items: center; gap: 5px; border: none; border-radius: 7px; padding: 6px 13px; font-size: 12px; font-weight: 500; cursor: pointer; transition: background 0.15s; white-space: nowrap; }
+  .btn-primary { background: #f96a38; color: white; }
+  .btn-primary:hover { background: #e85a28; }
+  .btn-secondary { background: #f0f1f5; color: #374151; }
+  .btn-secondary:hover { background: #e5e7eb; }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .instance-header { background: #fff; border-bottom: 1px solid #e2e4ea; padding: 10px 20px; display: flex; align-items: center; justify-content: space-between; border-top: 3px solid var(--accent); }
+  .instance-header-left { display: flex; align-items: center; gap: 10px; }
+  .instance-name { font-size: 14px; font-weight: 700; color: #1a1a2e; }
+  .last-sync { font-size: 11px; color: #9ca3af; }
+
+  .stats-bar { display: flex; gap: 6px; padding: 8px 20px; background: #fff; border-bottom: 1px solid #e2e4ea; flex-wrap: wrap; }
+  .stat-chip { display: flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 500; padding: 3px 9px; border-radius: 20px; }
+  .stat-chip .dot { width: 7px; height: 7px; border-radius: 50%; }
+  .chip-candidate { background: #f3f4f6; color: #6b7280; } .chip-candidate .dot { background: #9ca3af; }
+  .chip-planned   { background: #eff6ff; color: #2563eb; } .chip-planned   .dot { background: #3b82f6; }
+  .chip-inprogress { background: #fff7ed; color: #c2410c; } .chip-inprogress .dot { background: #f97316; }
+  .chip-delivered  { background: #f0fdf4; color: #15803d; } .chip-delivered  .dot { background: #22c55e; }
+
+  .board { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; padding: 14px 20px 20px; align-items: start; }
+  .column { background: #fff; border-radius: 10px; border: 1px solid #e2e4ea; overflow: hidden; }
+  .col-header { padding: 10px 14px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #e2e4ea; }
+  .col-title { display: flex; align-items: center; gap: 7px; font-size: 12px; font-weight: 600; }
+  .col-count { font-size: 11px; font-weight: 500; background: #f0f1f5; color: #6b7280; padding: 2px 7px; border-radius: 20px; min-width: 22px; text-align: center; }
+  .col-candidate  .col-header { border-top: 3px solid #9ca3af; } .col-candidate  .col-title { color: #6b7280; }
+  .col-planned    .col-header { border-top: 3px solid #3b82f6; } .col-planned    .col-title { color: #2563eb; }
+  .col-inprogress .col-header { border-top: 3px solid #f97316; } .col-inprogress .col-title { color: #c2410c; }
+  .col-delivered  .col-header { border-top: 3px solid #22c55e; } .col-delivered  .col-title { color: #15803d; }
+
+  .cards { padding: 8px; display: flex; flex-direction: column; gap: 7px; }
+  .card { background: #fafbfc; border: 1px solid #e8eaed; border-radius: 8px; padding: 9px 11px; transition: box-shadow 0.15s, border-color 0.15s; cursor: pointer; }
+  .card:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.08); border-color: #d1d5db; }
+  .card-name { font-size: 12px; font-weight: 500; color: #1a1a2e; line-height: 1.4; margin-bottom: 4px; }
+  .card-meta { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+  .card-health { font-size: 10px; font-weight: 600; padding: 2px 5px; border-radius: 4px; }
+  .health-on-track        { background: #dcfce7; color: #15803d; }
+  .health-needs-attention { background: #fef9c3; color: #854d0e; }
+  .health-off-track       { background: #fee2e2; color: #dc2626; }
+  .card-timeline { font-size: 10px; color: #6b7280; background: #f3f4f6; padding: 2px 5px; border-radius: 4px; }
+  .empty-col { padding: 20px 12px; text-align: center; color: #d1d5db; font-size: 12px; }
+
+  .loading-bar { text-align: center; padding: 40px; color: #9ca3af; font-size: 13px; }
+
+  .divider { height: 16px; background: #f5f6f8; border-top: 1px solid #e2e4ea; border-bottom: 1px solid #e2e4ea; }
+
+  /* Modal */
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 200; align-items: center; justify-content: center; }
+  .modal-overlay.visible { display: flex; }
+  .modal { background: #fff; border-radius: 12px; padding: 24px; width: 540px; max-width: 90vw; box-shadow: 0 20px 60px rgba(0,0,0,0.15); }
+  .modal h2 { font-size: 15px; font-weight: 600; margin-bottom: 16px; }
+  .modal label { font-size: 12px; font-weight: 600; color: #374151; display: block; margin-bottom: 5px; }
+  .modal input[type=password] { width: 100%; padding: 8px 11px; border: 1px solid #e2e4ea; border-radius: 7px; font-size: 13px; outline: none; margin-bottom: 14px; }
+  .modal input[type=password]:focus { border-color: #f96a38; }
+  .modal ol { font-size: 13px; color: #374151; margin-bottom: 12px; padding-left: 18px; line-height: 1.8; }
+  .modal code { font-size: 11px; background: #f3f4f6; padding: 1px 5px; border-radius: 3px; font-family: monospace; }
+  .modal textarea { width: 100%; height: 130px; border: 1px solid #e2e4ea; border-radius: 7px; padding: 9px 11px; font-size: 12px; font-family: monospace; resize: vertical; outline: none; }
+  .modal textarea:focus { border-color: #f96a38; }
+  .modal-footer { display: flex; justify-content: flex-end; gap: 10px; margin-top: 12px; }
+  .modal-error   { font-size: 12px; color: #dc2626; margin-top: 5px; display: none; }
+  .modal-success { font-size: 12px; color: #15803d; margin-top: 5px; display: none; }
+
+  @media (max-width: 900px) { .board { grid-template-columns: repeat(2, 1fr); } }
+</style>
+</head>
+<body>
+
+<!-- Eftsure Sync Status Modal -->
+<div class="modal-overlay" id="eftsureModal">
+  <div class="modal" style="width:360px;text-align:center;padding:32px 24px;">
+    <div id="eftSpinner" style="font-size:28px;margin-bottom:12px;">⇄</div>
+    <div id="eftStatusMsg" style="font-size:14px;color:#374151;margin-bottom:18px;">Fetching features from ProductBoard…</div>
+    <div class="modal-error" id="eftError" style="margin-bottom:10px;"></div>
+    <button class="btn btn-secondary" id="eftCloseBtn" onclick="closeEftModal()" style="display:none;margin:0 auto;">Close</button>
+  </div>
+</div>
+
+<!-- Sis ID Paste Modal -->
+<div class="modal-overlay" id="pasteModal">
+  <div class="modal">
+    <h2>Sync Sis ID from ProductBoard</h2>
+    <label for="syncToken">Sync token</label>
+    <input type="password" id="syncToken" placeholder="Enter your sync token">
+    <ol>
+      <li>Open Postman → your Sis ID ProductBoard request</li>
+      <li>Set <strong>GET</strong> <code>https://api.productboard.com/v2/entities</code></li>
+      <li>Header: <code>Authorization: Bearer &lt;your-token&gt;</code></li>
+      <li>Hit <strong>Send</strong>, copy the full response body</li>
+      <li>Paste below and click <strong>Update board</strong></li>
+    </ol>
+    <label for="pasteArea">API response JSON</label>
+    <textarea id="pasteArea" placeholder='{ "data": [ ... ] }'></textarea>
+    <div class="modal-error"   id="pasteError"></div>
+    <div class="modal-success" id="pasteSuccess"></div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" id="applyBtn" onclick="applyPaste()">Update board</button>
+    </div>
+  </div>
+</div>
+
+<!-- Top nav -->
+<div class="topnav">
+  <div class="topnav-left">
+    <div class="logo">PB</div>
+    <h1>Roadmap</h1>
+  </div>
+  <div class="topnav-right">
+    <input class="search-input" id="searchInput" type="text" placeholder="Search all features…" oninput="renderAll()">
+    <button class="btn btn-secondary" onclick="refreshAll()" id="refreshBtn">↻ Refresh</button>
+  </div>
+</div>
+
+<!-- EFTSURE -->
+<div style="--accent:#f96a38">
+  <div class="instance-header">
+    <div class="instance-header-left">
+      <span class="instance-name">Eftsure</span>
+      <span class="last-sync" id="sync-eftsure">Loading…</span>
+    </div>
+    <button class="btn btn-secondary" onclick="openEftModal()">⇄ Sync</button>
+  </div>
+  <div class="stats-bar">
+    <span class="stat-chip chip-candidate"><span class="dot"></span><span id="cnt-eftsure-candidate">—</span> Candidate</span>
+    <span class="stat-chip chip-planned"><span class="dot"></span><span id="cnt-eftsure-planned">—</span> Planned</span>
+    <span class="stat-chip chip-inprogress"><span class="dot"></span><span id="cnt-eftsure-inprogress">—</span> In Progress</span>
+    <span class="stat-chip chip-delivered"><span class="dot"></span><span id="cnt-eftsure-delivered">—</span> Delivered</span>
+  </div>
+  <div id="loading-eftsure" class="loading-bar">Loading…</div>
+  <div class="board" id="board-eftsure" style="display:none">
+    <div class="column col-candidate">
+      <div class="col-header"><span class="col-title">🔍 Candidate</span><span class="col-count" id="col-eftsure-candidate">—</span></div>
+      <div class="cards" id="cards-eftsure-candidate"></div>
+    </div>
+    <div class="column col-planned">
+      <div class="col-header"><span class="col-title">📋 Planned</span><span class="col-count" id="col-eftsure-planned">—</span></div>
+      <div class="cards" id="cards-eftsure-planned"></div>
+    </div>
+    <div class="column col-inprogress">
+      <div class="col-header"><span class="col-title">⚡ In Progress</span><span class="col-count" id="col-eftsure-inprogress">—</span></div>
+      <div class="cards" id="cards-eftsure-inprogress"></div>
+    </div>
+    <div class="column col-delivered">
+      <div class="col-header"><span class="col-title">✅ Delivered</span><span class="col-count" id="col-eftsure-delivered">—</span></div>
+      <div class="cards" id="cards-eftsure-delivered"></div>
+    </div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- SIS ID -->
+<div style="--accent:#7c3aed">
+  <div class="instance-header" style="border-top-color:#7c3aed">
+    <div class="instance-header-left">
+      <span class="instance-name">Sis ID</span>
+      <span class="last-sync" id="sync-sisid">Loading…</span>
+    </div>
+    <button class="btn btn-secondary" onclick="openModal('sisid')">⇄ Sync</button>
+  </div>
+  <div class="stats-bar">
+    <span class="stat-chip chip-candidate"><span class="dot"></span><span id="cnt-sisid-candidate">—</span> Discovery</span>
+    <span class="stat-chip chip-planned"><span class="dot"></span><span id="cnt-sisid-planned">—</span> Selected</span>
+    <span class="stat-chip chip-inprogress"><span class="dot"></span><span id="cnt-sisid-inprogress">—</span> Delivery</span>
+    <span class="stat-chip chip-delivered"><span class="dot"></span><span id="cnt-sisid-delivered">—</span> Finished</span>
+  </div>
+  <div id="loading-sisid" class="loading-bar">Loading…</div>
+  <div class="board" id="board-sisid" style="display:none">
+    <div class="column col-candidate">
+      <div class="col-header"><span class="col-title">🔍 Discovery</span><span class="col-count" id="col-sisid-candidate">—</span></div>
+      <div class="cards" id="cards-sisid-candidate"></div>
+    </div>
+    <div class="column col-planned">
+      <div class="col-header"><span class="col-title">📋 Selected</span><span class="col-count" id="col-sisid-planned">—</span></div>
+      <div class="cards" id="cards-sisid-planned"></div>
+    </div>
+    <div class="column col-inprogress">
+      <div class="col-header"><span class="col-title">⚡ Delivery</span><span class="col-count" id="col-sisid-inprogress">—</span></div>
+      <div class="cards" id="cards-sisid-inprogress"></div>
+    </div>
+    <div class="column col-delivered">
+      <div class="col-header"><span class="col-title">✅ Finished</span><span class="col-count" id="col-sisid-delivered">—</span></div>
+      <div class="cards" id="cards-sisid-delivered"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const SUPABASE_URL = 'https://fpbsjyefnitpplgrwopg.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_QQTrGagpQEdjVyiejGHsDg_56KML78l';
+const EFTSURE_SYNC_TOKEN = 'YOUR_SYNC_PASSWORD';
+
+const EFTSURE_STATUS_MAP = {
+  'candidate':'candidate','planned':'planned',
+  'in progress':'inprogress','in_progress':'inprogress',
+  'delivered':'delivered','released':'delivered','done':'delivered','shipped':'delivered'
+};
+const SISID_STATUS_MAP = {
+  'discovery':'candidate','selected':'planned',
+  'delivery':'inprogress','in delivery':'inprogress',
+  'finished':'delivered','done':'delivered','released':'delivered'
+};
+
+// Fallback seed data for Eftsure
+const SEED_EFTSURE = [{"id":"742f1c57-f1aa-4869-8d90-38bbd066901c","type":"feature","fields":{"name":"Sanctions Screening & Compliance (AU, NZ, EU)","status":{"name":"Candidate"},"health":null},"links":{"html":"https://eftsure.productboard.com/entity-detail/features/742f1c57-f1aa-4869-8d90-38bbd066901c"}},{"id":"9325a92b-bb22-4c8f-ac2d-7cc385a80a7d","type":"feature","fields":{"name":"Expand International Verifications to 200+ Countries","status":{"name":"Candidate"},"health":null},"links":{"html":"https://eftsure.productboard.com/entity-detail/features/9325a92b-bb22-4c8f-ac2d-7cc385a80a7d"}},{"id":"ef4a341f-8c86-4a0c-9bbd-36a3c0e23c10","type":"feature","fields":{"name":"AVS across Change Requests","status":{"name":"Candidate"},"health":null},"links":{"html":"https://eftsure.productboard.com/entity-detail/features/ef4a341f-8c86-4a0c-9bbd-36a3c0e23c10"}},{"id":"187eacae-03ef-4df0-b98e-78c1e3a61e4a","type":"feature","fields":{"name":"Eftsure Payments","status":{"name":"Candidate"},"health":null},"links":{"html":"https://eftsure.productboard.com/entity-detail/features/187eacae-03ef-4df0-b98e-78c1e3a61e4a"}},{"id":"ce05399f-9f68-4b3f-80eb-133817785de1","type":"feature","fields":{"name":"Identity & Payment Verifications for Individuals","status":{"name":"Candidate"},"health":null},"links":{"html":"https://eftsure.productboard.com/entity-detail/features/ce05399f-9f68-4b3f-80eb-133817785de1"}},{"id":"19259840-0134-40ee-b7ac-22437007c117","type":"feature","fields":{"name":"CoP in AP","status":{"name":"Planned"},"health":null},"links":{"html":"https://eftsure.productboard.com/entity-detail/features/19259840-0134-40ee-b7ac-22437007c117"}},{"id":"bf66d5b2-cbbe-43bc-ac44-c6217d1bd93f","type":"feature","fields":{"name":"Rationalise OTRS and AP functionality","status":{"name":"In progress"},"health":{"status":"offTrack"}},"links":{"html":"https://eftsure.productboard.com/entity-detail/features/bf66d5b2-cbbe-43bc-ac44-c6217d1bd93f"}},{"id":"c7647bc6-bc5b-453d-9784-38df7623d9e0","type":"feature","fields":{"name":"Enable US Address Verification","status":{"name":"In progress"},"health":{"status":"onTrack"}},"links":{"html":"https://eftsure.productboard.com/entity-detail/features/c7647bc6-bc5b-453d-9784-38df7623d9e0"}},{"id":"0d9e87c8-8a83-4052-9399-5ed3b31e0c0b","type":"feature","fields":{"name":"Enhance Sanction Screening - US","status":{"name":"In progress"},"health":{"status":"atRisk"}},"links":{"html":"https://eftsure.productboard.com/entity-detail/features/0d9e87c8-8a83-4052-9399-5ed3b31e0c0b"}},{"id":"64388544-898c-4a1b-a841-06617c734c22","type":"feature","fields":{"name":"Expand International verifications - 60+ countries","status":{"name":"Released"},"health":null},"links":{"html":"https://eftsure.productboard.com/entity-detail/features/64388544-898c-4a1b-a841-06617c734c22"}},{"id":"e4bb01aa-ae1e-4155-9ee6-636782a456d0","type":"feature","fields":{"name":"AVS across VMF upload & Add Supplier","status":{"name":"Released"},"health":null},"links":{"html":"https://eftsure.productboard.com/entity-detail/features/e4bb01aa-ae1e-4155-9ee6-636782a456d0"}}];
+
+// Fallback seed data for Sis ID
+const SEED_SISID = [{"id":"s1","type":"feature","fields":{"name":"Global Verification Engine","status":{"name":"Discovery"},"health":null},"links":{"html":""}},{"id":"s2","type":"feature","fields":{"name":"[RBAC] Users rights & scopes","status":{"name":"Discovery"},"health":null},"links":{"html":""}},{"id":"s3","type":"feature","fields":{"name":"[Sis Lite] Pay per use pricing model","status":{"name":"Discovery"},"health":null},"links":{"html":""}},{"id":"s4","type":"feature","fields":{"name":"[Controls PL] Natural persons in Poland","status":{"name":"Discovery"},"health":null},"links":{"html":""}},{"id":"s5","type":"feature","fields":{"name":"[Controls BG] Natural persons in Bulgaria","status":{"name":"Discovery"},"health":null},"links":{"html":""}},{"id":"s6","type":"feature","fields":{"name":"Bank account REGEX adjustments","status":{"name":"Selected"},"health":null},"links":{"html":""}},{"id":"s7","type":"feature","fields":{"name":"2FA","status":{"name":"Selected"},"health":null},"links":{"html":""}},{"id":"s8","type":"feature","fields":{"name":"Bulk files (JSON, CSV & XML)","status":{"name":"Selected"},"health":null},"links":{"html":""}},{"id":"s9","type":"feature","fields":{"name":"Contract permission management model","status":{"name":"Delivery"},"health":null},"links":{"html":""}},{"id":"s10","type":"feature","fields":{"name":"Angular upgrade","status":{"name":"Delivery"},"health":null},"links":{"html":""}},{"id":"s11","type":"feature","fields":{"name":"Audit trail","status":{"name":"Delivery"},"health":null},"links":{"html":""}},{"id":"s12","type":"feature","fields":{"name":"[Controls UK] Natural person checks","status":{"name":"Delivery"},"health":null},"links":{"html":""}},{"id":"s13","type":"feature","fields":{"name":"[Controls US] Match verification via Eftsure","status":{"name":"Finished"},"health":null},"links":{"html":""}},{"id":"s14","type":"feature","fields":{"name":"Power BE bank account ownership verification","status":{"name":"Finished"},"health":null},"links":{"html":""}},{"id":"s15","type":"feature","fields":{"name":"[Pipeline] New Alliance master pipeline","status":{"name":"Finished"},"health":null},"links":{"html":""}}];
+
+let features = { eftsure: [], sisid: [] };
+let activeInstance = null;
+
+// ── Supabase helpers ──
+async function sbFetch(path, options = {}) {
+  const res = await fetch(SUPABASE_URL + path, {
+    ...options,
+    headers: {
+      'apikey': SUPABASE_ANON_KEY,
+      'Authorization': 'Bearer ' + SUPABASE_ANON_KEY,
+      'Content-Type': 'application/json',
+      ...(options.headers || {})
+    }
+  });
+  return res.json();
+}
+
+async function loadFromSupabase() {
+  try {
+    const rows = await sbFetch('/rest/v1/roadmap_cache?select=instance,features,updated_at');
+    if (Array.isArray(rows)) {
+      for (const row of rows) {
+        const list = Array.isArray(row.features) ? row.features : [];
+        if (list.length > 0) {
+          features[row.instance] = list.filter(f => f.type === 'feature');
+          const d = new Date(row.updated_at);
+          document.getElementById(`sync-${row.instance}`).textContent =
+            'Synced ' + d.toLocaleString('en-AU', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' });
+        } else {
+          useSeed(row.instance);
+        }
+      }
+    } else {
+      useSeed('eftsure'); useSeed('sisid');
+    }
+  } catch(e) {
+    useSeed('eftsure'); useSeed('sisid');
+  }
+  document.getElementById('loading-eftsure').style.display = 'none';
+  document.getElementById('loading-sisid').style.display = 'none';
+  document.getElementById('board-eftsure').style.display = '';
+  document.getElementById('board-sisid').style.display = '';
+  renderAll();
+}
+
+function useSeed(instance) {
+  features[instance] = instance === 'eftsure' ? SEED_EFTSURE : SEED_SISID;
+  document.getElementById(`sync-${instance}`).textContent = 'Showing placeholder data';
+}
+
+async function refreshAll() {
+  const btn = document.getElementById('refreshBtn');
+  btn.disabled = true; btn.textContent = '↻ Refreshing…';
+  await loadFromSupabase();
+  btn.disabled = false; btn.textContent = '↻ Refresh';
+}
+
+// ── Render helpers ──
+function getFields(f) { return f.fields || {}; }
+
+function normalizeStatus(f, instance) {
+  const map = instance === 'sisid' ? SISID_STATUS_MAP : EFTSURE_STATUS_MAP;
+  const s = ((getFields(f).status && getFields(f).status.name) || '').toLowerCase().trim();
+  return map[s] || null;
+}
+
+function healthBadge(health) {
+  if (!health || !health.status) return '';
+  const map = { 'onTrack':['health-on-track','● On track'], 'offTrack':['health-off-track','✖ Off track'], 'atRisk':['health-needs-attention','⚠ At risk'] };
+  const [cls, label] = map[health.status] || ['',''];
+  return cls ? `<span class="card-health ${cls}">${label}</span>` : '';
+}
+
+function timelineBadge(fld, status) {
+  const tf = fld.timeframe || {};
+  const startDate = tf.startDate || fld.startDate || null;
+  const endDate   = tf.endDate   || fld.endDate   || null;
+  if (!startDate && !endDate) return '';
+  const fmt = iso => { const d = new Date(iso); return d.toLocaleString('en-AU', { month:'short', year:'numeric' }); };
+  if (status === 'inprogress') {
+    return [startDate && `<span class="card-timeline">▶ ${fmt(startDate)}</span>`,
+            endDate   && `<span class="card-timeline">⏹ ${fmt(endDate)}</span>`].filter(Boolean).join('');
+  }
+  if (startDate && endDate) return `<span class="card-timeline">📅 ${fmt(startDate)} – ${fmt(endDate)}</span>`;
+  return `<span class="card-timeline">📅 ${endDate ? 'Due ' + fmt(endDate) : 'From ' + fmt(startDate)}</span>`;
+}
+
+function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+function renderInstance(instance) {
+  const query = document.getElementById('searchInput').value.toLowerCase().trim();
+  const list = features[instance] || [];
+  const filtered = query ? list.filter(f => (getFields(f).name||'').toLowerCase().includes(query)) : list;
+  const buckets = { candidate:[], planned:[], inprogress:[], delivered:[] };
+  for (const f of filtered) {
+    const s = normalizeStatus(f, instance);
+    if (s && buckets[s]) buckets[s].push(f);
+  }
+  for (const [key, items] of Object.entries(buckets)) {
+    document.getElementById(`col-${instance}-${key}`).textContent = items.length;
+    document.getElementById(`cnt-${instance}-${key}`).textContent = items.length;
+    const el = document.getElementById(`cards-${instance}-${key}`);
+    if (!items.length) { el.innerHTML = '<div class="empty-col">No features</div>'; continue; }
+    el.innerHTML = items.map(f => {
+      const fld = getFields(f);
+      const status = normalizeStatus(f, instance);
+      const showTimeline = status === 'planned' || status === 'inprogress' || status === 'delivered';
+      const link = f.links && f.links.html;
+      return `<div class="card" ${link ? `onclick="window.open('${esc(link)}','_blank')"` : ''}>
+        <div class="card-name">${esc(fld.name || 'Untitled')}</div>
+        <div class="card-meta">
+          ${status !== 'delivered' ? healthBadge(fld.health) : ''}
+          ${showTimeline ? timelineBadge(fld, status) : ''}
+        </div>
+      </div>`;
+    }).join('');
+  }
+}
+
+function renderAll() { renderInstance('eftsure'); renderInstance('sisid'); }
+
+// ── Eftsure live sync (one-click, tokens hardcoded) ──
+function openEftModal() {
+  const modal = document.getElementById('eftsureModal');
+  document.getElementById('eftSpinner').textContent = '⇄';
+  document.getElementById('eftStatusMsg').textContent = 'Fetching features from ProductBoard…';
+  document.getElementById('eftError').style.display = 'none';
+  document.getElementById('eftCloseBtn').style.display = 'none';
+  modal.classList.add('visible');
+  syncEftsure();
+}
+function closeEftModal() { document.getElementById('eftsureModal').classList.remove('visible'); }
+
+async function syncEftsure() {
+  const errEl = document.getElementById('eftError');
+  try {
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/sync-productboard`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + SUPABASE_ANON_KEY },
+      body: JSON.stringify({ sync_token: EFTSURE_SYNC_TOKEN, instance: 'eftsure' })
+    });
+    const result = await res.json();
+    if (result.error) throw new Error(result.error);
+
+    features['eftsure'] = (result.features || []).filter(f => f.type === 'feature');
+    const now = new Date();
+    document.getElementById('sync-eftsure').textContent =
+      'Synced ' + now.toLocaleString('en-AU', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' });
+    renderInstance('eftsure');
+    document.getElementById('eftSpinner').textContent = '✓';
+    document.getElementById('eftStatusMsg').textContent = `${result.count} features synced successfully.`;
+    setTimeout(closeEftModal, 1500);
+
+  } catch(e) {
+    document.getElementById('eftSpinner').textContent = '✖';
+    document.getElementById('eftStatusMsg').textContent = 'Sync failed.';
+    errEl.textContent = e.message;
+    errEl.style.display = 'block';
+    document.getElementById('eftCloseBtn').style.display = 'inline-flex';
+  }
+}
+
+// ── Sis ID paste modal ──
+function openModal(instance) {
+  activeInstance = instance;
+  document.getElementById('pasteModal').classList.add('visible');
+  document.getElementById('pasteArea').value = '';
+  document.getElementById('syncToken').value = '';
+  document.getElementById('pasteError').style.display = 'none';
+  document.getElementById('pasteSuccess').style.display = 'none';
+  document.getElementById('applyBtn').disabled = false;
+  document.getElementById('applyBtn').textContent = 'Update board';
+}
+function closeModal() { document.getElementById('pasteModal').classList.remove('visible'); }
+
+async function applyPaste() {
+  const token = document.getElementById('syncToken').value.trim();
+  const raw   = document.getElementById('pasteArea').value.trim();
+  const errEl = document.getElementById('pasteError');
+  const sucEl = document.getElementById('pasteSuccess');
+  const btn   = document.getElementById('applyBtn');
+  errEl.style.display = 'none'; sucEl.style.display = 'none';
+
+  if (!token) { errEl.textContent = 'Please enter your sync token.'; errEl.style.display = 'block'; return; }
+  if (!raw)   { errEl.textContent = 'Please paste the API response.'; errEl.style.display = 'block'; return; }
+
+  let items;
+  try {
+    const parsed = JSON.parse(raw);
+    items = parsed.data || parsed;
+    if (!Array.isArray(items)) throw new Error('Expected array under "data"');
+  } catch(e) {
+    errEl.textContent = 'Invalid JSON — ' + e.message; errEl.style.display = 'block'; return;
+  }
+
+  btn.disabled = true; btn.textContent = 'Saving…';
+
+  try {
+    const result = await sbFetch('/rest/v1/rpc/sync_roadmap', {
+      method: 'POST',
+      body: JSON.stringify({ p_token: token, p_instance: activeInstance, p_features: items })
+    });
+
+    if (result && result.error) {
+      errEl.textContent = result.error === 'Invalid sync token' ? 'Incorrect sync token.' : result.error;
+      errEl.style.display = 'block';
+      btn.disabled = false; btn.textContent = 'Update board';
+      return;
+    }
+
+    // Success — update local state and re-render
+    features[activeInstance] = items.filter(f => f.type === 'feature');
+    const now = new Date();
+    document.getElementById(`sync-${activeInstance}`).textContent =
+      'Synced ' + now.toLocaleString('en-AU', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' });
+    renderInstance(activeInstance);
+    sucEl.textContent = '✓ Board updated successfully.';
+    sucEl.style.display = 'block';
+    btn.textContent = 'Done';
+    setTimeout(closeModal, 1200);
+
+  } catch(e) {
+    errEl.textContent = 'Network error — ' + e.message; errEl.style.display = 'block';
+    btn.disabled = false; btn.textContent = 'Update board';
+  }
+}
+
+window.addEventListener('load', loadFromSupabase);
+document.getElementById('pasteModal').addEventListener('click', e => { if (e.target === document.getElementById('pasteModal')) closeModal(); });
+document.getElementById('eftsureModal').addEventListener('click', e => { if (e.target === document.getElementById('eftsureModal')) closeEftModal(); });
+</script>
+</body>
+</html>
