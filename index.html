@@ -81,15 +81,12 @@
 
   /* ── Cards (kanban-style) ── */
   .cards { display:flex; flex-direction:column; gap:7px; }
-  .card { background:#fafbfc; border:1px solid #e8eaed; border-radius:8px; padding:9px 11px; transition:box-shadow .15s, border-color .15s; cursor:pointer; }
-  .card:hover { box-shadow:0 2px 8px rgba(0,0,0,.08); border-color:#d1d5db; }
+  .card { background:#fafbfc; border:1px solid #e8eaed; border-left:3px solid #e8eaed; border-radius:8px; padding:9px 11px; transition:box-shadow .15s; cursor:pointer; }
+  .card:hover { box-shadow:0 2px 8px rgba(0,0,0,.08); }
+  .card.team-eft { border-left-color:var(--eft); }
+  .card.team-sis { border-left-color:var(--sis); }
   .card-name { font-size:12px; font-weight:500; color:var(--text); line-height:1.4; margin-bottom:5px; }
   .card-meta { display:flex; align-items:center; gap:4px; flex-wrap:wrap; }
-
-  /* Instance badge */
-  .card-instance { font-size:10px; font-weight:700; padding:2px 6px; border-radius:4px; letter-spacing:.02em; }
-  .inst-eft { background:#fff4f0; color:var(--eft); border:1px solid #fcd9c9; }
-  .inst-sis { background:#f5f3ff; color:var(--sis); border:1px solid #ddd6fe; }
 
   /* Status badge */
   .card-status { font-size:10px; font-weight:600; padding:2px 6px; border-radius:4px; display:flex; align-items:center; gap:3px; }
@@ -165,8 +162,8 @@
       <tr>
         <th></th>
         <th></th>
-        <th class="region-au">🇦🇺 Australia</th>
-        <th class="region-us">🌎 USA &amp; Global Enterprise</th>
+        <th class="region-au">🇦🇺 ANZ</th>
+        <th class="region-us">🌎 US &amp; Global</th>
         <th class="region-eu">🇪🇺 Europe</th>
       </tr>
     </thead>
@@ -179,29 +176,59 @@ const SUPABASE_URL  = 'https://fpbsjyefnitpplgrwopg.supabase.co';
 const SUPABASE_ANON = 'sb_publishable_QQTrGagpQEdjVyiejGHsDg_56KML78l';
 const SYNC_TOKEN    = 'YOUR_SYNC_PASSWORD';
 
+// Region detection: custom field (v2), tags, then name-based keywords
 const REGION_FIELD_ID = 'bd4b3406-ebbe-4a84-ae2b-1d3b9ed90474';
-const REGION_LOOKUP = {
-  'anz':'au','australia':'au','au':'au','anz/au':'au',
-  'us & global':'us','us&global':'us','usa':'us','us':'us','global enterprise':'us','north america':'us','global':'us',
-  'europe':'eu','eu':'eu','emea':'eu','european':'eu'
+
+// Parent component/product → default region (v1 API uses fields.parent)
+const PARENT_REGION = {
+  '6a7c23a5': null,        // Sanctions — determined by name
+  'f964e860': 'au',        // AVS / Verification
+  '0e24e07f': 'us',        // Verification FFC/GovCode (US)
+  'ce40a57c': 'us',        // Address Verification (US)
+  '7e530ace': 'us',        // Data Masking
+  '2c3f2f74': 'au',        // International Verifications
+  '5bfcc122': 'au',        // Fraud component
+  '2d249293': 'au',        // Identity & Payments product
+  'dfe464b3': 'au',        // Eftsure Payments product
+  '08398664': 'au',        // Global product
+  '2b6b959a': 'au',        // Supplier Viability product
+  '93bf704a': 'au',        // AP/Platform product
+  'a60cbcc8': 'au',        // Sanctions/API product
 };
 
 function getRegionCol(feature) {
   const fld = feature.fields || {};
+
+  // 1. v2 custom field (present when synced via v2 API)
   const arr = fld[REGION_FIELD_ID];
   if (Array.isArray(arr) && arr.length) {
-    for (const r of arr) {
-      const key = (r.name||'').toLowerCase().trim();
-      if (REGION_LOOKUP[key]) return REGION_LOOKUP[key];
-      for (const [k,v] of Object.entries(REGION_LOOKUP)) if (key.includes(k)) return v;
-    }
+    const name = (arr[0].name||'').toLowerCase();
+    if (name.includes('anz')||name.includes('aus')||name.includes('au')) return 'au';
+    if (name.includes('us')||name.includes('global')) return 'us';
+    if (name.includes('eu')||name.includes('europ')) return 'eu';
   }
+
+  // 2. Tags (v2 Supabase data includes tags)
   for (const t of (fld.tags||[]).map(t=>(t.name||'').toLowerCase())) {
-    if (REGION_LOOKUP[t]) return REGION_LOOKUP[t];
+    if (t==='us'||t.includes('us &')) return 'us';
     if (t.includes('aus')||t==='anz'||t==='au') return 'au';
     if (t.includes('eu')||t.includes('europ')) return 'eu';
-    if (t==='us') return 'us';
   }
+
+  // 3. Feature name keywords
+  const name = (fld.name||'').toLowerCase();
+  if (name.includes(' us ')||name.includes('- us')||name.includes('for us')||name.includes('in us')||name.includes('ofac')||name.includes('united states')) return 'us';
+  if (name.includes('gdpr')||name.includes('europ')||name.includes(' eu ')||name.includes('germany')||name.includes('netherlands')) return 'eu';
+  if (name.includes('anz')||name.includes('australia')||name.includes('zepto')||name.includes('cop')||name.includes(' au ')||name.includes('(au')||name.includes('nz')) return 'au';
+
+  // 4. Parent-based default region (v1: fields.parent.component.id or fields.parent.product.id)
+  const parentId = (fld.parent?.component?.id || fld.parent?.product?.id || '').substring(0,8);
+  if (parentId && PARENT_REGION[parentId] !== undefined) return PARENT_REGION[parentId];
+
+  // 5. Relationships fallback (v2 format)
+  const relParent = ((feature.relationships?.data||[]).find(r=>r.type==='parent')?.target?.id||'').substring(0,8);
+  if (relParent && PARENT_REGION[relParent] !== undefined) return PARENT_REGION[relParent];
+
   return null;
 }
 
@@ -235,9 +262,15 @@ const KEYWORD_RULES = [
 ];
 
 function getInitiative(f) {
-  const parentId = ((f.relationships?.data||[]).find(r=>r.type==='parent')?.target?.id||'').substring(0,8);
-  if (PARENT_MAP[parentId]) return PARENT_MAP[parentId];
-  const name = (f.fields?.name||'').toLowerCase();
+  const fld = f.fields || {};
+  // v1: parent stored at fields.parent.component.id or fields.parent.product.id
+  const v1ParentId = (fld.parent?.component?.id || fld.parent?.product?.id || '').substring(0,8);
+  if (v1ParentId && PARENT_MAP[v1ParentId]) return PARENT_MAP[v1ParentId];
+  // v2: parent in relationships.data
+  const v2ParentId = ((f.relationships?.data||[]).find(r=>r.type==='parent')?.target?.id||'').substring(0,8);
+  if (v2ParentId && PARENT_MAP[v2ParentId]) return PARENT_MAP[v2ParentId];
+  // Keyword fallback
+  const name = (fld.name||'').toLowerCase();
   for (const r of KEYWORD_RULES) if (r.words.some(w=>name.includes(w))) return {obj:r.obj,init:r.init};
   return null;
 }
@@ -365,16 +398,13 @@ function timelineBadge(item) {
 }
 
 function cardHTML(item) {
-  const instCls = item.team==='sis' ? 'inst-sis' : 'inst-eft';
-  const instLbl = item.team==='sis' ? 'SIS' : 'EFT';
+  const teamCls = item.team==='sis' ? 'team-sis' : 'team-eft';
   const st=(item.status||'').replace(' ','').toLowerCase();
-  const showTimeline = st==='planned'||st==='inprogress'||st==='released';
-  return `<div class="card">
+  return `<div class="card ${teamCls}">
     <div class="card-name">${esc(item.name)}</div>
     <div class="card-meta">
-      <span class="card-instance ${instCls}">${instLbl}</span>
       ${st!=='released' ? healthBadge(item.health) : ''}
-      ${showTimeline ? timelineBadge(item) : ''}
+      ${timelineBadge(item)}
     </div>
   </div>`;
 }
@@ -478,7 +508,20 @@ async function refresh() {
 }
 
 document.getElementById('syncModal').addEventListener('click',e=>{if(e.target===document.getElementById('syncModal'))closeSyncModal();});
-window.addEventListener('load',loadFromSupabase);
+
+// Debug: direct write to confirm JS and DOM work
+var tb = document.getElementById('tableBody');
+tb.innerHTML = '<tr><td colspan="5" style="padding:20px;color:green;font-weight:bold">JS running, SEED length: '+SEED.length+'</td></tr>';
+
+// Render seed
+try {
+  render({data:SEED,stats:null});
+} catch(err) {
+  document.getElementById('tableBody').innerHTML = '<tr><td colspan="5" style="padding:20px;color:red">Render error: '+err.message+'</td></tr>';
+}
+
+// Then try Supabase for live data
+loadFromSupabase();
 </script>
 </body>
 </html>
