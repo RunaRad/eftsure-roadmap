@@ -2,7 +2,7 @@
 {
   "name": "Productboard Roadmap",
   "schemaVersion": 1,
-  "description": "Eftsure 2H 2026 roadmap — Objective × Region matrix. Rows: Objective group → Initiative. Columns: Australia, USA & Global Enterprise, Europe."
+  "description": "Eftsure 2H 2026 roadmap — dynamic matrix built from ProductBoard components, products and regions."
 }
 </script>
 <html lang="en">
@@ -13,14 +13,11 @@
 <style>
   :root {
     --eft:#f96a38; --sis:#7c3aed;
-    --au:#0ea5e9; --us:#10b981; --eu:#f59e0b;
     --border:#e2e4ea; --bg:#f5f6f8; --text:#1a1a2e; --muted:#6b7280;
-    --growth:#10b981; --custsat:#3b82f6; --foundation:#8b5cf6;
   }
   * { box-sizing:border-box; margin:0; padding:0; }
   body { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; }
 
-  /* ── Nav (matches kanban) ── */
   .topnav { background:#fff; border-bottom:1px solid var(--border); padding:12px 20px; display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:100; }
   .topnav-left { display:flex; align-items:center; gap:10px; }
   .logo { width:28px; height:28px; background:linear-gradient(135deg,#f96a38,#e94e77); border-radius:7px; display:flex; align-items:center; justify-content:center; color:#fff; font-weight:700; font-size:13px; flex-shrink:0; }
@@ -37,72 +34,63 @@
   .btn-secondary:hover { background:#e5e7eb; }
   .btn:disabled { opacity:.5; cursor:not-allowed; }
 
-  /* ── Legend bar (matches kanban) ── */
   .legend { background:#fff; border-bottom:1px solid var(--border); padding:8px 20px; display:flex; align-items:center; gap:14px; flex-wrap:wrap; }
   .legend-label { font-size:11px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.04em; }
   .legend-item { display:flex; align-items:center; gap:5px; font-size:11px; color:var(--text); }
   .ldot { width:8px; height:8px; border-radius:50%; display:inline-block; }
-  .s-candidate { background:#60a5fa; }
-  .s-planned   { background:#facc15; }
-  .s-inprog    { background:#fb923c; }
-  .s-released  { background:#4ade80; }
 
-  /* ── Summary bar ── */
   .summary-bar { background:#fff; border-bottom:1px solid var(--border); padding:6px 20px; display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
-  .sum-chip { font-size:11px; font-weight:500; padding:3px 9px; border-radius:20px; display:flex; align-items:center; gap:5px; }
-  .sum-chip .ldot { width:7px; height:7px; }
+  .sum-chip { font-size:11px; font-weight:500; padding:3px 9px; border-radius:20px; }
   .chip-candidate  { background:#eff6ff; color:#2563eb; }
   .chip-planned    { background:#fef9c3; color:#ca8a04; }
   .chip-inprogress { background:#fff7ed; color:#ea580c; }
   .chip-released   { background:#f0fdf4; color:#16a34a; }
   .chip-unplaced   { background:#f3f4f6; color:#6b7280; }
 
-  /* ── Table ── */
   .table-wrap { overflow-x:auto; padding:16px 20px 40px; }
-  table { width:100%; border-collapse:collapse; background:#fff; border-radius:10px; overflow:hidden; box-shadow:0 1px 4px rgba(0,0,0,.06); border:1px solid var(--border); table-layout:fixed; }
+  table { width:100%; border-collapse:collapse; background:#fff; border-radius:10px; overflow:hidden; box-shadow:0 1px 4px rgba(0,0,0,.06); border:1px solid var(--border); }
 
-  thead th { background:#f9fafb; font-size:12px; font-weight:700; padding:11px 14px; text-align:left; border-bottom:2px solid var(--border); color:var(--muted); }
-  thead th.region-au { border-top:3px solid var(--au); color:var(--au); }
-  thead th.region-us { border-top:3px solid var(--us); color:var(--us); }
-  thead th.region-eu { border-top:3px solid var(--eu); color:var(--eu); }
-  thead th:first-child  { width:155px; border-top:3px solid transparent; }
-  thead th:nth-child(2) { width:195px; border-top:3px solid transparent; }
+  thead th { background:#f9fafb; font-size:12px; font-weight:700; padding:11px 14px; text-align:left; border-bottom:2px solid var(--border); color:var(--muted); border-top:3px solid transparent; min-width:220px; }
+  thead th.col-init { width:220px; min-width:180px; border-top:3px solid transparent; }
 
-  /* Objective group rows */
-  tr.obj-row td { font-size:11px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; padding:8px 14px; background:#f3f4f6; border-bottom:1px solid var(--border); color:var(--muted); }
-  tr.obj-row.growth     td:first-child { border-left:4px solid var(--growth);     color:var(--growth); }
-  tr.obj-row.custsat    td:first-child { border-left:4px solid var(--custsat);    color:var(--custsat); }
-  tr.obj-row.foundation td:first-child { border-left:4px solid var(--foundation); color:var(--foundation); }
+  tr.obj-row td { font-size:11px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; padding:8px 14px; background:#f3f4f6; border-bottom:1px solid var(--border); color:var(--muted); border-left:4px solid #d1d5db; }
 
-  /* Initiative rows */
   tr.init-row td { padding:10px 14px; border-bottom:1px solid #f0f1f5; vertical-align:top; }
-  td.init-name { font-size:12px; font-weight:600; color:var(--text); background:#fafbfc; border-right:1px solid var(--border); padding-left:18px; }
+  td.init-name { font-size:12px; font-weight:600; color:var(--text); background:#fafbfc; border-right:1px solid var(--border); padding-left:18px; width:220px; }
   td.region-cell { background:#fff; }
 
-  /* ── Cards (kanban-style) ── */
-  .cards { display:flex; flex-direction:column; gap:7px; }
-  .card { background:#fafbfc; border:1px solid #e8eaed; border-left:3px solid #e8eaed; border-radius:8px; padding:9px 11px; transition:box-shadow .15s; cursor:pointer; }
-  .card:hover { box-shadow:0 2px 8px rgba(0,0,0,.08); }
+  .cards { display:flex; flex-direction:column; gap:4px; }
+  .card { background:#fafbfc; border:1px solid #e8eaed; border-left:3px solid #e8eaed; border-radius:6px; padding:6px 26px 6px 10px; transition:box-shadow .15s; cursor:pointer; display:flex; align-items:center; gap:6px; min-height:0; }
+  .card:hover { box-shadow:0 1px 4px rgba(0,0,0,.08); }
   .card.team-eft { border-left-color:var(--eft); }
   .card.team-sis { border-left-color:var(--sis); }
-  .card-name { font-size:12px; font-weight:500; color:var(--text); line-height:1.4; margin-bottom:5px; }
-  .card-meta { display:flex; align-items:center; gap:4px; flex-wrap:wrap; }
-
-  /* Status badge */
-  .card-status { font-size:10px; font-weight:600; padding:2px 6px; border-radius:4px; display:flex; align-items:center; gap:3px; }
-  .st-candidate  { background:#eff6ff; color:#2563eb; }
-  .st-planned    { background:#fef9c3; color:#ca8a04; }
-  .st-inprogress { background:#fff7ed; color:#c2410c; }
-  .st-released   { background:#f0fdf4; color:#15803d; }
-
-  .card-health   { font-size:10px; font-weight:600; padding:2px 5px; border-radius:4px; }
+  .card-name { font-size:11px; font-weight:500; color:var(--text); flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-width:0; }
+  .card-meta { display:flex; align-items:center; gap:4px; flex-shrink:0; }
+  .card-health { font-size:10px; font-weight:600; padding:1px 5px; border-radius:4px; white-space:nowrap; }
   .health-on-track        { background:#dcfce7; color:#15803d; }
   .health-needs-attention { background:#fef9c3; color:#854d0e; }
   .health-off-track       { background:#fee2e2; color:#dc2626; }
-  .card-timeline { font-size:10px; color:#6b7280; background:#f3f4f6; padding:2px 5px; border-radius:4px; }
-  .empty-cell { color:#d1d5db; font-size:11px; padding:4px 0; display:block; }
+  .card-timeline { font-size:10px; color:#6b7280; background:#f3f4f6; padding:1px 5px; border-radius:4px; white-space:nowrap; }
+  .empty-cell { color:#d1d5db; font-size:11px; }
+  .card { cursor: grab; position:relative; }
+  .card.dragging { opacity:.35; cursor:grabbing; box-shadow:none; }
+  .card-dismiss { position:absolute; top:6px; right:7px; width:16px; height:16px; border-radius:50%; border:none; background:transparent; color:#9ca3af; font-size:13px; line-height:1; cursor:pointer; display:none; align-items:center; justify-content:center; padding:0; }
+  .card:hover .card-dismiss { display:flex; }
+  .card-dismiss:hover { background:#fee2e2; color:#dc2626; }
+  .region-cell.drag-over { background:#eff6ff; outline:2px dashed #93c5fd; outline-offset:-2px; }
+  .region-cell { min-height:48px; }
 
-  /* ── Modal (matches kanban) ── */
+  .no-data { padding:48px 20px; text-align:center; color:var(--muted); font-size:13px; }
+
+  /* Filter bar */
+  .filter-bar { background:#fff; border-bottom:1px solid var(--border); padding:8px 20px; display:flex; align-items:center; gap:16px; flex-wrap:wrap; }
+  .filter-group { display:flex; align-items:center; gap:6px; }
+  .filter-label { font-size:11px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.04em; white-space:nowrap; }
+  .filter-chip { font-size:11px; font-weight:500; padding:3px 10px; border-radius:20px; border:1px solid #e2e4ea; background:#f9fafb; color:var(--muted); cursor:pointer; transition:all .15s; display:flex; align-items:center; gap:5px; user-select:none; }
+  .filter-chip .ldot { width:7px; height:7px; border-radius:50%; }
+  .filter-chip.active { border-color:transparent; }
+  .filter-chip:hover { opacity:.85; }
+
   .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.4); z-index:200; align-items:center; justify-content:center; }
   .modal-overlay.visible { display:flex; }
   .modal { background:#fff; border-radius:12px; padding:28px; width:400px; max-width:94vw; box-shadow:0 20px 60px rgba(0,0,0,.15); text-align:center; }
@@ -128,7 +116,7 @@
     <div class="logo">PB</div>
     <h1>Roadmap</h1>
     <span class="badge">2H 2026</span>
-    <span class="badge badge-seed" id="dataBadge">Seed data</span>
+    <span class="badge badge-seed" id="dataBadge">No data</span>
     <span class="last-sync" id="lastSync"></span>
   </div>
   <div class="topnav-right">
@@ -142,332 +130,476 @@
   <span class="legend-item"><span class="ldot" style="background:var(--eft)"></span>EFTsure</span>
   <span class="legend-item"><span class="ldot" style="background:var(--sis)"></span>Sis ID</span>
   <span class="legend-label" style="margin-left:8px">Status</span>
-  <span class="legend-item"><span class="ldot s-candidate"></span>Candidate</span>
-  <span class="legend-item"><span class="ldot s-planned"></span>Planned</span>
-  <span class="legend-item"><span class="ldot s-inprog"></span>In Progress</span>
-  <span class="legend-item"><span class="ldot s-released"></span>Released</span>
+  <span class="legend-item"><span class="ldot" style="background:#60a5fa"></span>Candidate</span>
+  <span class="legend-item"><span class="ldot" style="background:#facc15"></span>Planned</span>
+  <span class="legend-item"><span class="ldot" style="background:#fb923c"></span>In Progress</span>
+  <span class="legend-item"><span class="ldot" style="background:#4ade80"></span>Released</span>
 </div>
 
 <div class="summary-bar" id="summaryBar" style="display:none">
-  <span class="sum-chip chip-inprogress"><span class="ldot s-inprog"></span><span id="cnt-inprog"></span></span>
-  <span class="sum-chip chip-candidate"><span class="ldot s-candidate"></span><span id="cnt-candidate"></span></span>
-  <span class="sum-chip chip-planned"><span class="ldot s-planned"></span><span id="cnt-planned"></span></span>
-  <span class="sum-chip chip-released"><span class="ldot s-released"></span><span id="cnt-released"></span></span>
-  <span class="sum-chip chip-unplaced" id="chip-unplaced" style="display:none"><span id="cnt-unplaced"></span></span>
+  <span class="sum-chip chip-inprogress" id="cnt-inprog"></span>
+  <span class="sum-chip chip-candidate"  id="cnt-candidate"></span>
+  <span class="sum-chip chip-planned"    id="cnt-planned"></span>
+  <span class="sum-chip chip-released"   id="cnt-released"></span>
+  <span class="sum-chip chip-unplaced"   id="cnt-unplaced" style="display:none"></span>
 </div>
 
+<div class="filter-bar" id="filterBar" style="display:none"></div>
+
 <div class="table-wrap">
-  <table>
-    <thead>
-      <tr>
-        <th></th>
-        <th></th>
-        <th class="region-au">🇦🇺 ANZ</th>
-        <th class="region-us">🌎 US &amp; Global</th>
-        <th class="region-eu">🇪🇺 Europe</th>
-      </tr>
-    </thead>
-    <tbody id="tableBody"></tbody>
+  <table id="mainTable">
+    <thead id="tableHead"><tr><th class="col-init"></th></tr></thead>
+    <tbody id="tableBody"><tr><td class="no-data">Sync from ProductBoard to load data</td></tr></tbody>
   </table>
 </div>
 
 <script>
+// ── Global state ──
+let rawData = {features:[], initiatives:[], objectives:[]};
+let activeFilters = {
+  teams:    new Set(['eft','sis']),
+  statuses: new Set(['candidate','planned','inprogress','released']),
+  regions:  new Set() // all regions active by default (empty = no filter)
+};
+
 const SUPABASE_URL  = 'https://fpbsjyefnitpplgrwopg.supabase.co';
 const SUPABASE_ANON = 'sb_publishable_QQTrGagpQEdjVyiejGHsDg_56KML78l';
 const SYNC_TOKEN    = 'YOUR_SYNC_PASSWORD';
+const REGION_FIELD  = 'bd4b3406-ebbe-4a84-ae2b-1d3b9ed90474';
 
-// Region detection: custom field (v2), tags, then name-based keywords
-const REGION_FIELD_ID = 'bd4b3406-ebbe-4a84-ae2b-1d3b9ed90474';
-
-// Parent component/product → default region (v1 API uses fields.parent)
-const PARENT_REGION = {
-  '6a7c23a5': null,        // Sanctions — determined by name
-  'f964e860': 'au',        // AVS / Verification
-  '0e24e07f': 'us',        // Verification FFC/GovCode (US)
-  'ce40a57c': 'us',        // Address Verification (US)
-  '7e530ace': 'us',        // Data Masking
-  '2c3f2f74': 'au',        // International Verifications
-  '5bfcc122': 'au',        // Fraud component
-  '2d249293': 'au',        // Identity & Payments product
-  'dfe464b3': 'au',        // Eftsure Payments product
-  '08398664': 'au',        // Global product
-  '2b6b959a': 'au',        // Supplier Viability product
-  '93bf704a': 'au',        // AP/Platform product
-  'a60cbcc8': 'au',        // Sanctions/API product
-};
-
-function getRegionCol(feature) {
-  const fld = feature.fields || {};
-
-  // 1. v2 custom field (present when synced via v2 API)
-  const arr = fld[REGION_FIELD_ID];
-  if (Array.isArray(arr) && arr.length) {
-    const name = (arr[0].name||'').toLowerCase();
-    if (name.includes('anz')||name.includes('aus')||name.includes('au')) return 'au';
-    if (name.includes('us')||name.includes('global')) return 'us';
-    if (name.includes('eu')||name.includes('europ')) return 'eu';
-  }
-
-  // 2. Tags (v2 Supabase data includes tags)
-  for (const t of (fld.tags||[]).map(t=>(t.name||'').toLowerCase())) {
-    if (t==='us'||t.includes('us &')) return 'us';
-    if (t.includes('aus')||t==='anz'||t==='au') return 'au';
-    if (t.includes('eu')||t.includes('europ')) return 'eu';
-  }
-
-  // 3. Feature name keywords
-  const name = (fld.name||'').toLowerCase();
-  if (name.includes(' us ')||name.includes('- us')||name.includes('for us')||name.includes('in us')||name.includes('ofac')||name.includes('united states')) return 'us';
-  if (name.includes('gdpr')||name.includes('europ')||name.includes(' eu ')||name.includes('germany')||name.includes('netherlands')) return 'eu';
-  if (name.includes('anz')||name.includes('australia')||name.includes('zepto')||name.includes('cop')||name.includes(' au ')||name.includes('(au')||name.includes('nz')) return 'au';
-
-  // 4. Parent-based default region (v1: fields.parent.component.id or fields.parent.product.id)
-  const parentId = (fld.parent?.component?.id || fld.parent?.product?.id || '').substring(0,8);
-  if (parentId && PARENT_REGION[parentId] !== undefined) return PARENT_REGION[parentId];
-
-  // 5. Relationships fallback (v2 format)
-  const relParent = ((feature.relationships?.data||[]).find(r=>r.type==='parent')?.target?.id||'').substring(0,8);
-  if (relParent && PARENT_REGION[relParent] !== undefined) return PARENT_REGION[relParent];
-
-  return null;
-}
-
-const PARENT_MAP = {
-  '6a7c23a5':{obj:'growth',init:'Sanctions Screening'},
-  'f964e860':{obj:'custsat',init:'Verification Performance'},
-  '0e24e07f':{obj:'custsat',init:'Verification Performance'},
-  'ce40a57c':{obj:'custsat',init:'Verification Performance'},
-  '7e530ace':{obj:'custsat',init:'Customer Asks'},
-  '2c3f2f74':{obj:'foundation',init:'International Verifications'},
-  '5bfcc122':{obj:'growth',init:'Fraud Signals'},
-  '2d249293':{obj:'growth',init:'Individuals Verification'},
-  'dfe464b3':{obj:'growth',init:'Individuals Verification'},
-  '08398664':{obj:'growth',init:'Global Entity Support'},
-  '2b6b959a':{obj:'growth',init:'Supplier Viability Monitoring'},
-};
-const KEYWORD_RULES = [
-  {words:['sanction'],obj:'growth',init:'Sanctions Screening'},
-  {words:['fraud','fraud scenario'],obj:'growth',init:'Fraud Signals'},
-  {words:['supplier viab','creditprotect'],obj:'growth',init:'Supplier Viability Monitoring'},
-  {words:['individual','identity & pay'],obj:'growth',init:'Individuals Verification'},
-  {words:['global entit','singapore','canada'],obj:'growth',init:'Global Entity Support'},
-  {words:['localiz','germany','netherlands'],obj:'growth',init:'Localization'},
-  {words:['avs','confirmation of payee','address verif','govcode','cop in ap','cop & abn'],obj:'custsat',init:'Verification Performance'},
-  {words:['mask','masking','liberty mutual'],obj:'custsat',init:'Customer Asks'},
-  {words:['self-certif'],obj:'custsat',init:'Self-Certification'},
-  {words:['international verif','200+ countr','50+ countr','60+ countr','gdpr'],obj:'foundation',init:'International Verifications'},
-  {words:['routing number','swift','iban'],obj:'foundation',init:'Data Validation'},
-  {words:['otrs','rationali','churnzero','approver','payment file'],obj:'foundation',init:'Tenant Configuration & Rights Mgmt'},
-  {words:['enhanced verif engine','anomaly detect','waterfall bav','distributable db'],obj:'foundation',init:'Global Payee DB & Ver. Engine'},
+// Colour palette for regions (cycles for unknown ones)
+const REGION_PALETTE = [
+  {color:'#0ea5e9', bg:'#e0f2fe', border:'#7dd3fc'},
+  {color:'#10b981', bg:'#dcfce7', border:'#6ee7b7'},
+  {color:'#f59e0b', bg:'#fef3c7', border:'#fcd34d'},
+  {color:'#8b5cf6', bg:'#ede9fe', border:'#c4b5fd'},
+  {color:'#ec4899', bg:'#fce7f3', border:'#f9a8d4'},
+  {color:'#f97316', bg:'#ffedd5', border:'#fdba74'},
 ];
 
-function getInitiative(f) {
+function regionStyle(name) {
+  const n = (name||'').toLowerCase();
+  if (n.includes('anz')||n.includes('aus')||n.includes('au')) return REGION_PALETTE[0];
+  if (n.includes('us')||n.includes('global')||n.includes('north am')) return REGION_PALETTE[1];
+  if (n.includes('eu')||n.includes('europ')) return REGION_PALETTE[2];
+  // Hash-based stable colour for unknown regions
+  const h = [...(name||'')].reduce((a,c)=>a+c.charCodeAt(0),0);
+  return REGION_PALETTE[3 + (h % (REGION_PALETTE.length - 3))];
+}
+
+// ── Region extraction from a feature ──
+function getFeatureRegions(f) {
   const fld = f.fields || {};
-  // v1: parent stored at fields.parent.component.id or fields.parent.product.id
-  const v1ParentId = (fld.parent?.component?.id || fld.parent?.product?.id || '').substring(0,8);
-  if (v1ParentId && PARENT_MAP[v1ParentId]) return PARENT_MAP[v1ParentId];
-  // v2: parent in relationships.data
-  const v2ParentId = ((f.relationships?.data||[]).find(r=>r.type==='parent')?.target?.id||'').substring(0,8);
-  if (v2ParentId && PARENT_MAP[v2ParentId]) return PARENT_MAP[v2ParentId];
-  // Keyword fallback
+
+  // 1. Custom field (v2 or if spread by edge function)
+  const arr = fld[REGION_FIELD];
+  if (Array.isArray(arr) && arr.length) return arr.map(r => r.name);
+
+  // 2. Tags
+  const tagNames = (fld.tags||[]).map(t=>(t.name||'').trim());
+  const regionTags = tagNames.filter(t => {
+    const tl = t.toLowerCase();
+    return tl==='us'||tl.includes('anz')||tl.includes('au')||tl.includes('eu')||tl.includes('global');
+  });
+  if (regionTags.length) {
+    return regionTags.map(t => {
+      const tl = t.toLowerCase();
+      if (tl==='us') return 'US & Global';
+      if (tl.includes('anz')||tl.includes('au')) return 'ANZ';
+      if (tl.includes('eu')) return 'Europe';
+      return t;
+    });
+  }
+
+  // 3. Name keywords
   const name = (fld.name||'').toLowerCase();
-  for (const r of KEYWORD_RULES) if (r.words.some(w=>name.includes(w))) return {obj:r.obj,init:r.init};
-  return null;
+  if (name.includes(' us ')||name.includes('- us')||name.includes('for us')||name.includes('ofac')||name.includes('united states')) return ['US & Global'];
+  if (name.includes('gdpr')||name.includes('europ')||name.includes(' eu ')||name.includes('germany')) return ['Europe'];
+  if (name.includes('anz')||name.includes('australia')||name.includes('zepto')||name.includes('(au')||name.includes(' au,')) return ['ANZ'];
+
+  return [];
 }
 
-const SEED = [
-  {id:'growth',label:'Growth',initiatives:[
-    {name:'Individuals Verification',
-      au:[{name:'Individual Person Verification',team:'eft',status:'candidate'}],
-      us:[{name:'Natural Persons Expansion',team:'sis',status:'candidate'},{name:'Rights/Entitlements Mgmt',team:'sis',status:'candidate'}],
-      eu:[{name:'Natural Persons → IPV',team:'sis',status:'candidate'}]},
-    {name:'Sanctions Screening',
-      au:[{name:'Sanctions Screening — OFAC',team:'eft',status:'candidate'},{name:'AU/NZ Sanctions Screening',team:'eft',status:'candidate'}],
-      us:[{name:'Sanctions Screening — OFAC w/ Eftsure Data',team:'eft',status:'inprogress'},{name:'Global Sanctions Screening',team:'eft',status:'candidate'}],
-      eu:[{name:'EU Sanctions Screening',team:'sis',status:'candidate'}]},
-    {name:'Global Entity Support',
-      au:[{name:'Singapore Regionalization',team:'eft',status:'candidate'}],
-      us:[{name:'Global Entity Support',team:'eft',status:'candidate'}],eu:[]},
-    {name:'Supplier Viability Monitoring',
-      au:[{name:'Supplier Risk Mgmt',team:'eft',status:'candidate'}],us:[],eu:[]},
-    {name:'Fraud Signals',
-      au:[{name:'Fraud Check Failure Handling',team:'eft',status:'candidate'},{name:'Review & Update Fraud Checks',team:'eft',status:'candidate'}],
-      us:[],
-      eu:[{name:'Closed/Unreachable/Fraudulent Accounts data',team:'sis',status:'candidate'},{name:'Negative company checks',team:'sis',status:'candidate'}]},
-    {name:'Localization',au:[],us:[],eu:[{name:'Germany, Netherlands…',team:'sis',status:'candidate'}]}
-  ]},
-  {id:'custsat',label:'Customer Sat',initiatives:[
-    {name:'Verification Performance',
-      au:[{name:'Improve AVS Pass Rate for Onboardings',team:'eft',status:'candidate'},{name:'AVS support for Change Requests',team:'eft',status:'candidate'},{name:'CoP & ABN support',team:'sis',status:'candidate'}],
-      us:[],
-      eu:[{name:'Verification by Name/address (Optional ID)',team:'eft',status:'candidate'}]},
-    {name:'Customer Asks',au:[],us:[{name:'Data Masking — Liberty Mutual',team:'eft',status:'candidate'}],eu:[]},
-    {name:'Self-Certification',au:[],us:[],eu:[{name:'Certified by Client',team:'sis',status:'candidate'}]}
-  ]},
-  {id:'foundation',label:'Foundation',initiatives:[
-    {name:'Tenant Configuration & Rights Mgmt',
-      au:[{name:'…',team:'eft',status:'candidate'}],us:[{name:'Rights Mgmt',team:'eft',status:'candidate'}],eu:[{name:'…',team:'eft',status:'candidate'}]},
-    {name:'International Verifications',
-      au:[{name:'Expand to all 200 Countries',team:'eft',status:'planned'}],us:[],eu:[]},
-    {name:'Data Validation',
-      au:[],us:[{name:'Routing Number & SWIFT Lookup',team:'eft',status:'candidate'}],eu:[]},
-    {name:'Global Payee DB & Ver. Engine',
-      au:[],
-      us:[{name:'Enhanced Verification Engine',team:'eft',status:'candidate'},{name:'Anomaly Detection Pilot',team:'eft',status:'candidate'},{name:'Globally Distributable DB Architecture',team:'eft',status:'candidate'}],
-      eu:[]}
-  ]}
-];
+// ── Build dynamic matrix from objectives → initiatives ──
+function buildMatrix(features, initiatives, objectives) {
+  // Build lookup maps
+  const objMap = {};
+  for (const o of (objectives||[])) objMap[o.id] = {id:o.id, name:o.name};
 
-function buildMatrix(rawFeatures) {
-  if (!rawFeatures||!rawFeatures.length) return {data:SEED,stats:null};
-  const matrix = SEED.map(o=>({...o,initiatives:o.initiatives.map(i=>({...i,au:[],us:[],eu:[]}))}));
-  const dynamic = {};
-  const stats = {candidate:0,planned:0,inprogress:0,released:0,unplaced:0};
-  for (const f of rawFeatures) {
-    if (f.type!=='feature'||f.fields?.archived) continue;
-    const fld=f.fields||{}, name=fld.name||'Untitled';
-    const status=(fld.status?.name||'').toLowerCase();
-    const col=getRegionCol(f), place=getInitiative(f);
+  const initMap = {};
+  for (const i of (initiatives||[])) initMap[i.id] = {id:i.id, name:i.name, objectiveId:i.objectiveId};
+
+  const INCLUDE = ['candidate','planned','in progress','released'];
+
+  // Discover regions and build grid
+  const regionOrder = [];
+  const regionSet = new Set();
+  const grid = {};      // objId -> initId -> regionName -> [items]
+  const objInits = {};  // objId -> [initId] ordered by first appearance
+  const stats = {candidate:0, planned:0, inprogress:0, released:0, unplaced:0};
+
+  for (const f of (features||[])) {
+    const fld = f.fields || {};
+    if (f.type !== 'feature' || fld.archived) continue;
+    const status = (fld.status?.name||'').toLowerCase();
+    if (!INCLUDE.includes(status)) continue;
+
     if (status.includes('in progress')) stats.inprogress++;
     else if (status==='candidate') stats.candidate++;
     else if (status==='planned') stats.planned++;
     else if (status==='released') stats.released++;
-    if (!col||!place) { stats.unplaced++; continue; }
-    const tf=fld.timeframe||{};
-    const item={
-      name, team:'eft', status:status.replace(' ',''),
-      health: fld.health||null,
-      startDate: tf.startDate||fld.startDate||null,
-      endDate:   tf.endDate  ||fld.endDate  ||null
-    };
-    const objData=matrix.find(o=>o.id===place.obj);
-    if (objData) {
-      const initData=objData.initiatives.find(i=>i.name===place.init);
-      if (initData) { initData[col].push(item); continue; }
+
+    // Find initiative AND objective links from feature's own relationships
+    const rels = f.relationships?.data || [];
+    const initLinks = rels.filter(r => r.type==='link' && r.target?.type==='initiative').map(r => r.target.id);
+    // Feature may directly link to objective too — use as fallback when initiative has no objectiveId
+    const featureObjIds = rels.filter(r => r.type==='link' && r.target?.type==='objective').map(r => r.target.id);
+
+    if (!initLinks.length) { stats.unplaced++; continue; }
+
+    const regions = getFeatureRegions(f);
+    if (!regions.length) { stats.unplaced++; continue; }
+
+    // Register regions
+    for (const r of regions) {
+      if (!regionSet.has(r)) { regionSet.add(r); regionOrder.push(r); }
     }
-    const key=`${place.obj}.${place.init}`;
-    if (!dynamic[key]) dynamic[key]={name:place.init,_obj:place.obj,au:[],us:[],eu:[]};
-    dynamic[key][col].push(item);
+
+    // Place in grid
+    for (const initId of initLinks) {
+      const init = initMap[initId];
+      // Get objective from initiative map, OR directly from feature's objective link
+      const objId = init?.objectiveId || featureObjIds[0] || null;
+      if (!objId) continue;
+
+      if (!grid[objId]) grid[objId] = {};
+      if (!grid[objId][initId]) grid[objId][initId] = {};
+      if (!objInits[objId]) objInits[objId] = [];
+      if (!objInits[objId].includes(initId)) objInits[objId].push(initId);
+
+      for (const r of regions) {
+        if (!grid[objId][initId][r]) grid[objId][initId][r] = [];
+        grid[objId][initId][r].push(buildItem(f));
+      }
+    }
   }
-  for (const init of Object.values(dynamic)) {
-    const objData=matrix.find(o=>o.id===init._obj);
-    if (objData) objData.initiatives.push({name:init.name,au:init.au,us:init.us,eu:init.eu});
+
+  // Sort regions: ANZ → US & Global → Europe → others
+  const regions = [...regionOrder].sort((a,b) => {
+    const s = n => { const l=n.toLowerCase(); return l.includes('anz')||l.includes('aus')?0:l.includes('us')||l.includes('global')?1:l.includes('eu')||l.includes('europ')?2:3; };
+    return s(a)-s(b);
+  });
+
+  // Build ordered rows
+  const rows = [];
+  const OBJ_COLORS = ['#10b981','#3b82f6','#8b5cf6','#f59e0b','#ec4899','#f97316'];
+  let colorIdx = 0;
+
+  for (const objId of Object.keys(grid)) {
+    const obj = objMap[objId] || {id:objId, name:'Other'};
+    const color = OBJ_COLORS[colorIdx++ % OBJ_COLORS.length];
+    const initRows = [];
+    for (const initId of (objInits[objId]||[])) {
+      if (!grid[objId]?.[initId]) continue;
+      const init = initMap[initId] || {id:initId, name:'–'};
+      const cells = {};
+      for (const r of regions) cells[r] = grid[objId][initId][r] || [];
+      if (Object.values(cells).some(a=>a.length>0)) initRows.push({init, cells});
+    }
+    if (initRows.length) rows.push({obj, color, inits: initRows});
   }
-  return {data:matrix,stats};
+
+  return {rows, regions, stats};
 }
 
+function buildItem(f) {
+  const fld = f.fields || {};
+  const tf = fld.timeframe || {};
+  return {
+    name: fld.name || 'Untitled',
+    team: 'eft',
+    status: (fld.status?.name||'').toLowerCase(),
+    health: fld.health || null,
+    startDate: tf.startDate || fld.startDate || null,
+    endDate: tf.endDate || fld.endDate || null,
+    link: f.links?.html || fld.links?.html || null
+  };
+}
+
+// ── Render ──
 function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-
-function statusCls(s) {
-  s=(s||'').replace(' ','').toLowerCase();
-  if (s==='released') return 'st-released';
-  if (s.includes('inprogress')||s==='inprogress') return 'st-inprogress';
-  if (s==='planned') return 'st-planned';
-  return 'st-candidate';
-}
-function statusLabel(s) {
-  s=(s||'').toLowerCase();
-  if (s.includes('progress')) return 'In Progress';
-  if (s==='released') return 'Released';
-  if (s==='planned') return 'Planned';
-  return 'Candidate';
-}
 
 function healthBadge(h) {
   if (!h||!h.status) return '';
-  const map={'onTrack':['health-on-track','● On track'],'offTrack':['health-off-track','✖ Off track'],'atRisk':['health-needs-attention','⚠ At risk']};
-  const [cls,lbl]=map[h.status]||['',''];
+  const map = {'onTrack':['health-on-track','● On track'],'offTrack':['health-off-track','✖ Off track'],'atRisk':['health-needs-attention','⚠ At risk']};
+  const [cls,lbl] = map[h.status]||['',''];
   return cls ? `<span class="card-health ${cls}">${lbl}</span>` : '';
+}
+
+function statusDot(st) {
+  const map = {
+    'candidate':  ['#60a5fa','Candidate'],
+    'planned':    ['#facc15','Planned'],
+    'inprogress': ['#fb923c','In Progress'],
+    'released':   ['#4ade80','Released'],
+  };
+  const key = (st||'').replace(/ /g,'').toLowerCase();
+  const [color, label] = map[key] || ['#9ca3af', st||''];
+  return `<span title="${label}" style="width:7px;height:7px;border-radius:50%;background:${color};display:inline-block;flex-shrink:0"></span>`;
 }
 
 function timelineBadge(item) {
   const fmt = iso => {
     if (!iso) return null;
-    const d=new Date(iso);
+    const d = new Date(iso);
     if (isNaN(d.getTime())) return null;
-    return d.toLocaleString('en-AU',{month:'short',year:'numeric'});
+    return `Q${Math.floor(d.getMonth()/3)+1} ${d.getFullYear()}`;
   };
   const fs=fmt(item.startDate), fe=fmt(item.endDate);
   if (!fs&&!fe) return '';
-  const st=(item.status||'').replace(' ','').toLowerCase();
-  if (st==='inprogress') {
-    return [fs&&`<span class="card-timeline">▶ ${fs}</span>`,fe&&`<span class="card-timeline">⏹ ${fe}</span>`].filter(Boolean).join('');
-  }
-  if (fs&&fe) return `<span class="card-timeline">📅 ${fs} – ${fe}</span>`;
-  return `<span class="card-timeline">📅 ${fe?'Due '+fe:'From '+fs}</span>`;
+  // Same quarter → single label
+  if (fs && fe && fs===fe) return `<span class="card-timeline">${fs}</span>`;
+  if (fs&&fe) return `<span class="card-timeline">${fs} – ${fe}</span>`;
+  return `<span class="card-timeline">${fe||fs}</span>`;
 }
 
 function cardHTML(item) {
   const teamCls = item.team==='sis' ? 'team-sis' : 'team-eft';
-  const st=(item.status||'').replace(' ','').toLowerCase();
-  return `<div class="card ${teamCls}">
-    <div class="card-name">${esc(item.name)}</div>
-    <div class="card-meta">
-      ${st!=='released' ? healthBadge(item.health) : ''}
-      ${timelineBadge(item)}
-    </div>
+  const st = (item.status||'').replace(/ /g,'').toLowerCase();
+  const health = st!=='released' ? healthBadge(item.health) : '';
+  const timeline = timelineBadge(item);
+  return `<div class="card ${teamCls}" ${item.link?`onclick="window.open('${esc(item.link)}','_blank')"`:''}>
+    ${statusDot(item.status)}
+    <span class="card-name" title="${esc(item.name)}">${esc(item.name)}</span>
+    <div class="card-meta">${health}${timeline}</div>
+    <button class="card-dismiss" onclick="event.stopPropagation();this.closest('.card').remove()" title="Hide">×</button>
   </div>`;
 }
 
-function cellHTML(items) {
-  if (!items||!items.length) return `<td class="region-cell"><span class="empty-cell">—</span></td>`;
-  return `<td class="region-cell"><div class="cards">${items.map(cardHTML).join('')}</div></td>`;
-}
+function render({rows, regions, stats}) {
+  // Build header dynamically
+  const head = document.getElementById('tableHead');
+  let hrow = '<tr><th class="col-init"></th>';
+  for (const r of regions) {
+    const s = regionStyle(r);
+    hrow += `<th style="border-top:3px solid ${s.color};color:${s.color}">${esc(r)}</th>`;
+  }
+  hrow += '</tr>';
+  head.innerHTML = hrow;
 
-function render(result) {
-  const data=result.data||result, stats=result.stats||null;
-  let html='';
-  for (const obj of data) {
-    html+=`<tr class="obj-row ${obj.id}"><td>${esc(obj.label)}</td><td colspan="4" style="background:#f3f4f6"></td></tr>`;
-    for (const init of obj.initiatives) {
-      const accent=obj.id==='custsat'?'custsat':obj.id;
-      html+=`<tr class="init-row">
-        <td class="init-name" colspan="2" style="border-left:4px solid var(--${accent})">${esc(init.name)}</td>
-        ${cellHTML(init.au)}${cellHTML(init.us)}${cellHTML(init.eu)}
-      </tr>`;
+  const body = document.getElementById('tableBody');
+  if (!rows.length) {
+    body.innerHTML = `<tr><td colspan="${regions.length+1}" class="no-data">No features placed — ensure features are linked to Initiatives in ProductBoard, then Sync</td></tr>`;
+    return;
+  }
+
+  let html = '';
+  for (const {obj, color, inits} of rows) {
+    html += `<tr class="obj-row"><td colspan="${regions.length+1}" style="border-left:4px solid ${color};color:${color}">${esc(obj.name)}</td></tr>`;
+    for (const {init, cells} of inits) {
+      html += `<tr class="init-row"><td class="init-name" style="border-left:3px solid ${color}">${esc(init.name)}</td>`;
+      for (const r of regions) {
+        const items = cells[r] || [];
+        html += items.length
+          ? `<td class="region-cell"><div class="cards">${items.map(cardHTML).join('')}</div></td>`
+          : `<td class="region-cell"><span class="empty-cell">—</span></td>`;
+      }
+      html += '</tr>';
     }
   }
-  document.getElementById('tableBody').innerHTML=html;
+  body.innerHTML = html;
+
   if (stats) {
-    document.getElementById('summaryBar').style.display='flex';
-    document.getElementById('cnt-inprog').textContent=`${stats.inprogress} In Progress`;
-    document.getElementById('cnt-candidate').textContent=`${stats.candidate} Candidate`;
-    document.getElementById('cnt-planned').textContent=`${stats.planned} Planned`;
-    document.getElementById('cnt-released').textContent=`${stats.released} Released`;
-    if (stats.unplaced) {
-      document.getElementById('chip-unplaced').style.display='flex';
-      document.getElementById('cnt-unplaced').textContent=`${stats.unplaced} No Region`;
-    }
+    document.getElementById('summaryBar').style.display = 'flex';
+    document.getElementById('cnt-inprog').textContent    = `${stats.inprogress} In Progress`;
+    document.getElementById('cnt-candidate').textContent  = `${stats.candidate} Candidate`;
+    document.getElementById('cnt-planned').textContent    = `${stats.planned} Planned`;
+    document.getElementById('cnt-released').textContent   = `${stats.released} Released`;
+    const up = document.getElementById('cnt-unplaced');
+    if (stats.unplaced) { up.textContent=`${stats.unplaced} No Initiative`; up.style.display='inline-flex'; }
+    else up.style.display = 'none';
   }
+  // Enable drag and drop after render
+  initDragDrop();
 }
 
+// ── Drag and drop ──
+let dragged = null;
+
+function initDragDrop() {
+  document.querySelectorAll('.card').forEach(card => {
+    card.setAttribute('draggable', 'true');
+    card.addEventListener('dragstart', e => {
+      dragged = card;
+      card.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+    });
+    card.addEventListener('dragend', () => {
+      card.classList.remove('dragging');
+      document.querySelectorAll('.region-cell').forEach(c => c.classList.remove('drag-over'));
+      dragged = null;
+    });
+  });
+
+  document.querySelectorAll('td.region-cell').forEach(cell => {
+    cell.addEventListener('dragover', e => {
+      e.preventDefault();
+      if (!dragged) return;
+      cell.classList.add('drag-over');
+      // Live reorder preview
+      const cardsEl = cell.querySelector('.cards') || (() => {
+        const d = document.createElement('div'); d.className='cards'; cell.innerHTML=''; cell.appendChild(d); return d;
+      })();
+      const after = getAfterElement(cardsEl, e.clientY);
+      if (after == null) cardsEl.appendChild(dragged);
+      else cardsEl.insertBefore(dragged, after);
+    });
+    cell.addEventListener('dragleave', e => {
+      if (!cell.contains(e.relatedTarget)) cell.classList.remove('drag-over');
+    });
+    cell.addEventListener('drop', e => {
+      e.preventDefault();
+      cell.classList.remove('drag-over');
+    });
+  });
+}
+
+function getAfterElement(container, y) {
+  const els = [...container.querySelectorAll('.card:not(.dragging)')];
+  return els.reduce((closest, el) => {
+    const box = el.getBoundingClientRect();
+    const offset = y - box.top - box.height / 2;
+    return offset < 0 && offset > closest.offset ? {offset, el} : closest;
+  }, {offset: Number.NEGATIVE_INFINITY, el: null}).el;
+}
+
+// ── Filter bar ──
+const STATUS_CHIPS = [
+  {key:'candidate',  label:'Candidate',   color:'#60a5fa', bg:'#eff6ff'},
+  {key:'planned',    label:'Planned',     color:'#ca8a04', bg:'#fef9c3'},
+  {key:'inprogress', label:'In Progress', color:'#ea580c', bg:'#fff7ed'},
+  {key:'released',   label:'Released',    color:'#16a34a', bg:'#f0fdf4'},
+];
+const TEAM_CHIPS = [
+  {key:'eft', label:'EFTsure', color:'#f96a38', bg:'#fff4f0'},
+  {key:'sis', label:'Sis ID',  color:'#7c3aed', bg:'#f5f3ff'},
+];
+
+function buildFilterBar(regions) {
+  const bar = document.getElementById('filterBar');
+  if (!bar) return;
+
+  const chipHTML = (chips, filterKey, activeSet) => chips.map(c => {
+    const on = activeSet.has(c.key);
+    const style = on
+      ? `background:${c.bg};color:${c.color};border-color:${c.color}`
+      : '';
+    return `<span class="filter-chip${on?' active':''}" style="${style}"
+      onclick="toggleFilter('${filterKey}','${c.key}',this,'${c.color}','${c.bg}')"
+      data-key="${c.key}">
+      <span class="ldot" style="background:${c.color}"></span>${c.label}
+    </span>`;
+  }).join('');
+
+  const regionChips = regions.map(r => {
+    const s = regionStyle(r);
+    const on = activeFilters.regions.size === 0 || activeFilters.regions.has(r);
+    const style = on ? `background:${s.bg};color:${s.color};border-color:${s.color}` : '';
+    return `<span class="filter-chip${on?' active':''}" style="${style}"
+      onclick="toggleRegion('${esc(r)}',this,'${s.color}','${s.bg}')"
+      data-region="${esc(r)}">
+      <span class="ldot" style="background:${s.color}"></span>${esc(r)}
+    </span>`;
+  }).join('');
+
+  bar.innerHTML = `
+    <div class="filter-group"><span class="filter-label">Team</span>${chipHTML(TEAM_CHIPS,'teams',activeFilters.teams)}</div>
+    <div class="filter-group"><span class="filter-label">Status</span>${chipHTML(STATUS_CHIPS,'statuses',activeFilters.statuses)}</div>
+    ${regions.length ? `<div class="filter-group"><span class="filter-label">Region</span>${regionChips}</div>` : ''}
+  `;
+  bar.style.display = 'flex';
+}
+
+function toggleFilter(filterKey, key, el, color, bg) {
+  const set = activeFilters[filterKey];
+  if (set.has(key)) { set.delete(key); el.classList.remove('active'); el.style.cssText=''; }
+  else { set.add(key); el.classList.add('active'); el.style.cssText=`background:${bg};color:${color};border-color:${color}`; }
+  applyFilters();
+}
+
+function toggleRegion(region, el, color, bg) {
+  const set = activeFilters.regions;
+  if (set.has(region)) { set.delete(region); el.classList.remove('active'); el.style.cssText=''; }
+  else { set.add(region); el.classList.add('active'); el.style.cssText=`background:${bg};color:${color};border-color:${color}`; }
+  applyFilters();
+}
+
+function applyFilters() {
+  const {features, initiatives, objectives} = rawData;
+  const filtered = features.filter(f => {
+    const fld = f.fields || {};
+    // Status filter
+    const st = (fld.status?.name||'').replace(/ /g,'').toLowerCase();
+    if (!activeFilters.statuses.has(st)) return false;
+    // Team filter (based on instance field if present, default 'eft')
+    const team = f.instance === 'sisid' ? 'sis' : 'eft';
+    if (!activeFilters.teams.has(team)) return false;
+    // Region filter (empty set = all regions)
+    if (activeFilters.regions.size > 0) {
+      const fRegions = getFeatureRegions(f);
+      if (!fRegions.some(r => activeFilters.regions.has(r))) return false;
+    }
+    return true;
+  });
+  render(buildMatrix(filtered, initiatives, objectives));
+}
+
+// ── Parse payload from Supabase or Sync response ──
+function parsePayload(raw) {
+  if (!raw) return {features:[], initiatives:[], objectives:[]};
+  if (Array.isArray(raw)) return {features:raw, initiatives:[], objectives:[]};
+  return {
+    features:    raw.features    || [],
+    initiatives: raw.initiatives || [],
+    objectives:  raw.objectives  || []
+  };
+}
+
+// ── Supabase load ──
 async function loadFromSupabase() {
   try {
     const res = await fetch(`${SUPABASE_URL}/rest/v1/roadmap_cache?select=instance,features,updated_at`,
       {headers:{apikey:SUPABASE_ANON,Authorization:'Bearer '+SUPABASE_ANON}});
     const rows = await res.json();
-    if (Array.isArray(rows)&&rows.some(r=>r.features?.length)) {
-      const all=rows.flatMap(r=>(r.features||[]).map(f=>({...f,instance:r.instance})));
-      const d=new Date(rows[0].updated_at);
-      document.getElementById('lastSync').textContent='Synced '+d.toLocaleString('en-AU',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
-      document.getElementById('dataBadge').textContent='Live data';
-      document.getElementById('dataBadge').className='badge badge-live';
-      render(buildMatrix(all));
-    } else {
-      document.getElementById('lastSync').textContent='Showing seed data';
-      render({data:SEED,stats:null});
+    if (Array.isArray(rows) && rows.length) {
+      const row = rows.find(r=>r.instance==='eftsure') || rows[0];
+      if (row?.features) {
+        const {features, initiatives, objectives} = parsePayload(row.features);
+        if (features.length) {
+          rawData = {features, initiatives, objectives};
+          const d = new Date(row.updated_at);
+          document.getElementById('lastSync').textContent = 'Synced '+d.toLocaleString('en-AU',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
+          document.getElementById('dataBadge').textContent = 'Live data';
+          document.getElementById('dataBadge').className = 'badge badge-live';
+          const result = buildMatrix(features, initiatives, objectives);
+          buildFilterBar(result.regions);
+          render(result);
+          return;
+        }
+      }
     }
+    document.getElementById('lastSync').textContent = 'No data — click Sync';
   } catch(e) {
-    document.getElementById('lastSync').textContent='Showing seed data';
-    render({data:SEED,stats:null});
+    document.getElementById('lastSync').textContent = 'Could not load — click Sync';
   }
 }
 
+// ── Sync ──
 function openSync() {
-  document.getElementById('syncIcon').textContent='⇄';
-  document.getElementById('syncMsg').textContent='Fetching from ProductBoard…';
-  document.getElementById('syncErr').style.display='none';
-  document.getElementById('syncClose').style.display='none';
+  document.getElementById('syncIcon').textContent = '⇄';
+  document.getElementById('syncMsg').textContent = 'Fetching from ProductBoard…';
+  document.getElementById('syncErr').style.display = 'none';
+  document.getElementById('syncClose').style.display = 'none';
   document.getElementById('syncModal').classList.add('visible');
   doSync();
 }
@@ -475,52 +607,47 @@ function closeSyncModal() { document.getElementById('syncModal').classList.remov
 
 async function doSync() {
   try {
-    const res=await fetch(`${SUPABASE_URL}/functions/v1/sync-productboard`,{
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/sync-productboard`, {
       method:'POST',
       headers:{'Content-Type':'application/json','Authorization':'Bearer '+SUPABASE_ANON},
-      body:JSON.stringify({sync_token:SYNC_TOKEN,instance:'eftsure'})
+      body:JSON.stringify({sync_token:SYNC_TOKEN, instance:'eftsure'})
     });
-    const result=await res.json();
+    const result = await res.json();
     if (result.error) throw new Error(result.error);
-    const all=(result.features||[]).map(f=>({...f,instance:'eftsure'}));
-    const now=new Date();
-    document.getElementById('lastSync').textContent='Synced '+now.toLocaleString('en-AU',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
-    document.getElementById('dataBadge').textContent='Live data';
-    document.getElementById('dataBadge').className='badge badge-live';
-    render(buildMatrix(all));
-    document.getElementById('syncIcon').textContent='✓';
-    document.getElementById('syncMsg').textContent=`${result.count} features synced.`;
-    setTimeout(closeSyncModal,1500);
+
+    const {features, initiatives, objectives} = parsePayload(result);
+    rawData = {features, initiatives, objectives};
+    const now = new Date();
+    document.getElementById('lastSync').textContent = 'Synced '+now.toLocaleString('en-AU',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
+    document.getElementById('dataBadge').textContent = 'Live data';
+    document.getElementById('dataBadge').className = 'badge badge-live';
+    const matResult = buildMatrix(features, initiatives, objectives);
+    buildFilterBar(matResult.regions);
+    render(matResult);
+
+    document.getElementById('syncIcon').textContent = '✓';
+    document.getElementById('syncMsg').textContent = `${result.count} features synced.`;
+    setTimeout(closeSyncModal, 1500);
   } catch(e) {
-    document.getElementById('syncIcon').textContent='✖';
-    document.getElementById('syncMsg').textContent='Sync failed.';
-    document.getElementById('syncErr').textContent=e.message;
-    document.getElementById('syncErr').style.display='block';
-    document.getElementById('syncClose').style.display='inline-flex';
+    document.getElementById('syncIcon').textContent = '✖';
+    document.getElementById('syncMsg').textContent = 'Sync failed.';
+    document.getElementById('syncErr').textContent = e.message;
+    document.getElementById('syncErr').style.display = 'block';
+    document.getElementById('syncClose').style.display = 'inline-flex';
   }
 }
 
 async function refresh() {
-  const btn=document.getElementById('refreshBtn');
-  btn.disabled=true; btn.textContent='↻ Refreshing…';
+  const btn = document.getElementById('refreshBtn');
+  btn.disabled = true; btn.textContent = '↻ Refreshing…';
   await loadFromSupabase();
-  btn.disabled=false; btn.textContent='↻ Refresh';
+  btn.disabled = false; btn.textContent = '↻ Refresh';
 }
 
-document.getElementById('syncModal').addEventListener('click',e=>{if(e.target===document.getElementById('syncModal'))closeSyncModal();});
+document.getElementById('syncModal').addEventListener('click', e => {
+  if (e.target === document.getElementById('syncModal')) closeSyncModal();
+});
 
-// Debug: direct write to confirm JS and DOM work
-var tb = document.getElementById('tableBody');
-tb.innerHTML = '<tr><td colspan="5" style="padding:20px;color:green;font-weight:bold">JS running, SEED length: '+SEED.length+'</td></tr>';
-
-// Render seed
-try {
-  render({data:SEED,stats:null});
-} catch(err) {
-  document.getElementById('tableBody').innerHTML = '<tr><td colspan="5" style="padding:20px;color:red">Render error: '+err.message+'</td></tr>';
-}
-
-// Then try Supabase for live data
 loadFromSupabase();
 </script>
 </body>
