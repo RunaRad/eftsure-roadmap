@@ -16,9 +16,10 @@
     --border:#e2e4ea; --bg:#f5f6f8; --text:#1a1a2e; --muted:#6b7280;
   }
   * { box-sizing:border-box; margin:0; padding:0; }
-  body { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; }
+  body { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; overflow-x:auto; }
 
-  .topnav { background:#fff; border-bottom:1px solid var(--border); padding:12px 20px; display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:100; }
+  .sticky-top { position:sticky; top:0; z-index:100; background:#fff; border-bottom:1px solid var(--border); }
+  .topnav { background:#fff; padding:10px 20px; display:flex; align-items:center; justify-content:space-between; border-bottom:none; }
   .topnav-left { display:flex; align-items:center; gap:10px; }
   .logo { width:28px; height:28px; background:linear-gradient(135deg,#f96a38,#e94e77); border-radius:7px; display:flex; align-items:center; justify-content:center; color:#fff; font-weight:700; font-size:13px; flex-shrink:0; }
   .topnav h1 { font-size:15px; font-weight:600; color:var(--text); }
@@ -49,17 +50,16 @@
   .chip-released   { background:#f0fdf4; color:#16a34a; }
   .chip-unplaced   { background:#f3f4f6; color:#6b7280; }
 
-  .table-wrap { overflow-x:auto; padding:16px 20px 40px; }
-  table { width:100%; border-collapse:collapse; background:#fff; border-radius:10px; overflow:hidden; box-shadow:0 1px 4px rgba(0,0,0,.06); border:1px solid var(--border); }
+  .table-wrap { overflow-x:visible; padding:12px 20px 40px; }
+  table { width:100%; border-collapse:collapse; background:#fff; box-shadow:0 1px 4px rgba(0,0,0,.06); border:1px solid var(--border); }
 
-  thead th { background:#f9fafb; font-size:12px; font-weight:700; padding:11px 14px; text-align:left; border-bottom:2px solid var(--border); color:var(--muted); border-top:3px solid transparent; min-width:220px; }
+  thead th { background:#f9fafb; font-size:12px; font-weight:700; padding:11px 14px; text-align:left; border-bottom:2px solid var(--border); color:var(--muted); border-top:3px solid transparent; min-width:220px; position:sticky; top:var(--sticky-h,150px); z-index:20; }
   thead th.col-init { width:220px; min-width:180px; border-top:3px solid transparent; }
 
   tr.obj-row td { font-size:11px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; padding:8px 14px; background:#f3f4f6; border-bottom:1px solid var(--border); color:var(--muted); border-left:4px solid #d1d5db; }
 
-  tr.init-row td { padding:5px 10px; border-bottom:none; vertical-align:middle; height:38px; }
-  tr.init-row.last-subrow td { border-bottom:1px solid #f0f1f5; }
-  td.init-name { font-size:12px; font-weight:600; color:var(--text); background:#fafbfc; border-right:1px solid var(--border); padding-left:18px; width:220px; vertical-align:middle; }
+  tr.init-row td { padding:6px 10px; border-bottom:1px solid #f0f1f5; vertical-align:top; }
+  td.init-name { font-size:12px; font-weight:600; color:var(--text); background:#fafbfc; border-right:1px solid var(--border); padding-left:18px; width:220px; vertical-align:top; }
   td.region-cell { background:#fff; }
 
   .cards { display:flex; flex-direction:column; gap:4px; } /* kept for drag-drop compat */
@@ -102,7 +102,7 @@
   .unplaced-reason { font-size:10px; color:#9ca3af; background:#f3f4f6; padding:1px 5px; border-radius:4px; white-space:nowrap; flex-shrink:0; }
 
   /* Tabs */
-  .tabs { background:#fff; border-bottom:1px solid var(--border); padding:0 20px; display:flex; gap:0; }
+  .tabs { background:#fff; border-top:1px solid var(--border); padding:0 20px; display:flex; gap:0; }
   .tab { border:none; background:none; padding:10px 18px; font-size:13px; font-weight:500; color:var(--muted); cursor:pointer; border-bottom:3px solid transparent; margin-bottom:-1px; transition:color .15s; }
   .tab:hover { color:var(--text); }
   .tab.tab-active { color:var(--eft); border-bottom-color:var(--eft); }
@@ -136,6 +136,7 @@
   </div>
 </div>
 
+<div class="sticky-top" id="stickyTop">
 <div class="topnav">
   <div class="topnav-left">
     <div class="logo">PB</div>
@@ -166,6 +167,8 @@
   <span class="sum-chip chip-unplaced"   id="cnt-unplaced" style="display:none"></span>
 </div>
 
+</div><!-- /sticky-top -->
+
 <div class="table-wrap">
   <table id="mainTable">
     <thead id="tableHead"><tr><th class="col-init"></th></tr></thead>
@@ -178,18 +181,60 @@
 // ── Global state ──
 let rawData = {features:[], initiatives:[], objectives:[]};
 let currentView = 'region'; // 'region' | 'quarter'
+let allRegions  = [];  // all regions discovered from full dataset
+let allQuarters = [];  // all quarters discovered from full dataset
 let activeFilters = {
   teams:    new Set(['eft','sis']),
   statuses: new Set(['candidate','planned','inprogress','released']),
-  regions:  null,   // populated on first By Region load
-  quarters: null    // populated on first By Quarter load
+  regions:  null,   // populated on first load from allRegions
+  quarters: null    // populated on first load from allQuarters
 };
+
+// Discover all possible regions/quarters from unfiltered features
+function discoverColumns(features) {
+  const rSet = new Set(), qSet = new Set();
+  for (const f of features) {
+    for (const r of getFeatureRegions(f)) rSet.add(r);
+    const q = getFeatureQuarter(f);
+    if (q) qSet.add(q);
+  }
+  const sortRegion = (a,b) => {
+    const s = n => { const l=n.toLowerCase(); return l.includes('anz')?0:l.includes('us')||l.includes('global')?1:l.includes('eu')?2:3; };
+    return s(a)-s(b);
+  };
+  const parse = s => { const [q,y] = s.replace('Q','').split(' '); return +y*4 + +q; };
+  allRegions  = [...rSet].sort(sortRegion);
+  allQuarters = [...qSet].sort((a,b) => parse(a)-parse(b));
+}
+
+// ── Local cache ──
+function saveCache(data, syncTime) {
+  try {
+    localStorage.setItem('pb_matrix_v2', JSON.stringify(data));
+    if (syncTime) localStorage.setItem('pb_matrix_ts', syncTime);
+  } catch(e) {}
+}
+function loadCache() {
+  try {
+    const raw = localStorage.getItem('pb_matrix_v2');
+    const ts  = localStorage.getItem('pb_matrix_ts');
+    if (raw) return {data: JSON.parse(raw), ts};
+  } catch(e) {}
+  return null;
+}
 
 function switchTab(view) {
   currentView = view;
   document.getElementById('tab-region').classList.toggle('tab-active',  view==='region');
   document.getElementById('tab-quarter').classList.toggle('tab-active', view==='quarter');
   if (rawData.features.length) applyFilters();
+}
+
+const OBJ_ORDER = ['growth','customer retention','customer sat','foundation'];
+function objSortKey(name) {
+  const n = (name||'').toLowerCase().trim();
+  const i = OBJ_ORDER.findIndex(o => n.includes(o));
+  return i === -1 ? 99 : i;
 }
 
 const SUPABASE_URL  = 'https://fpbsjyefnitpplgrwopg.supabase.co';
@@ -346,6 +391,7 @@ function buildMatrixByQuarter(features, initiatives, objectives) {
     }
     if (initRows.length) rows.push({obj, color, inits: initRows});
   }
+  rows.sort((a,b) => objSortKey(a.obj.name) - objSortKey(b.obj.name));
   return {rows, regions: quarters, stats, unplaced, viewType:'quarter'};
 }
 
@@ -438,7 +484,7 @@ function buildMatrix(features, initiatives, objectives) {
     }
     if (initRows.length) rows.push({obj, color, inits: initRows});
   }
-
+  rows.sort((a,b) => objSortKey(a.obj.name) - objSortKey(b.obj.name));
   return {rows, regions, stats, unplaced};
 }
 
@@ -534,37 +580,29 @@ function render({rows, regions, stats}) {
   for (const {obj, color, inits} of rows) {
     html += `<tr class="obj-row"><td colspan="${regions.length+1}" style="border-left:4px solid ${color};color:${color}">${esc(obj.name)}</td></tr>`;
     for (const {init, cells} of inits) {
-      // Deduplicate: each feature appears once, in its first matching region column
+      // Deduplicate across columns — each feature shown once in its primary region
       const seen = new Set();
-      const unified = []; // [{item, primaryRegion}]
+      const colCards = {}; // region -> [cardHTML strings]
       for (const r of regions) {
+        colCards[r] = [];
         for (const item of (cells[r]||[])) {
           if (seen.has(item.id)) continue;
           seen.add(item.id);
-          // Collect all regions this feature appears in
           item.secondaryRegions = regions.filter(
             reg => reg !== r && (cells[reg]||[]).some(i => i.id === item.id)
           );
-          unified.push({item, primaryRegion: r});
+          colCards[r].push(cardHTML(item));
         }
       }
-      const maxLen = Math.max(1, unified.length);
-      for (let i = 0; i < maxLen; i++) {
-        const isLast = i === maxLen - 1;
-        const entry = unified[i];
-        if (i === 0) {
-          html += `<tr class="init-row${isLast?' last-subrow':''}">
-            <td class="init-name" rowspan="${maxLen}" style="border-left:3px solid ${color};border-bottom:1px solid #f0f1f5">${esc(init.name)}</td>`;
-        } else {
-          html += `<tr class="init-row${isLast?' last-subrow':''}">`;
-        }
-        for (const r of regions) {
-          html += entry && entry.primaryRegion === r
-            ? `<td class="region-cell">${cardHTML(entry.item)}</td>`
-            : `<td class="region-cell"><span class="empty-cell" style="visibility:hidden">—</span></td>`;
-        }
-        html += '</tr>';
+      const hasContent = Object.values(colCards).some(a => a.length > 0);
+      html += `<tr class="init-row last-subrow">
+        <td class="init-name" style="border-left:3px solid ${color};border-bottom:1px solid #f0f1f5;vertical-align:top">${esc(init.name)}</td>`;
+      for (const r of regions) {
+        html += colCards[r].length
+          ? `<td class="region-cell" style="vertical-align:top"><div class="cards">${colCards[r].join('')}</div></td>`
+          : `<td class="region-cell"><span class="empty-cell">—</span></td>`;
       }
+      html += '</tr>';
     }
   }
   body.innerHTML = html;
@@ -583,6 +621,11 @@ function render({rows, regions, stats}) {
   }
   // Enable drag and drop after render
   initDragDrop();
+  // Set sticky header offset = height of the sticky top bar
+  requestAnimationFrame(() => {
+    const h = document.getElementById('stickyTop')?.offsetHeight || 0;
+    document.documentElement.style.setProperty('--sticky-h', h + 'px');
+  });
 }
 
 function renderUnplaced(unplaced) {
@@ -677,15 +720,12 @@ const TEAM_CHIPS = [
 function buildFilterBar(columnKeys, viewType) {
   const bar = document.getElementById('filterBar');
   if (!bar) return;
-  viewType = viewType || currentView;
 
-  // Initialise the appropriate column filter set
-  const colFilterKey = viewType==='quarter' ? 'quarters' : 'regions';
-  if (activeFilters[colFilterKey] === null) {
-    activeFilters[colFilterKey] = new Set(columnKeys);
-  } else {
-    columnKeys.forEach(k => { if (!activeFilters[colFilterKey].has(k)) activeFilters[colFilterKey].add(k); });
-  }
+  // Initialise both filter sets on first call
+  if (activeFilters.regions === null && allRegions.length)
+    activeFilters.regions = new Set(allRegions);
+  if (activeFilters.quarters === null && allQuarters.length)
+    activeFilters.quarters = new Set(allQuarters);
 
   const chipHTML = (chips, filterKey, activeSet) => chips.map(c => {
     const on = activeSet.has(c.key);
@@ -696,21 +736,21 @@ function buildFilterBar(columnKeys, viewType) {
     </span>`;
   }).join('');
 
-  const colChips = columnKeys.map(k => {
-    const s = viewType==='quarter' ? quarterStyle(k) : regionStyle(k);
-    const on = activeFilters[colFilterKey].has(k);
+  const colChips = (keys, filterKey, styleFn) => keys.map(k => {
+    const s = styleFn(k);
+    const on = activeFilters[filterKey] ? activeFilters[filterKey].has(k) : true;
     const style = on ? `background:${s.bg};color:${s.color};border-color:${s.color}` : '';
     return `<span class="filter-chip${on?' active':''}" style="${style}"
-      onclick="toggleFilter('${colFilterKey}','${k.replace(/'/g,"\\'")}',this,'${s.color}','${s.bg}')">
+      onclick="toggleFilter('${filterKey}','${k.replace(/'/g,"\\'")}',this,'${s.color}','${s.bg}')">
       <span class="ldot" style="background:${s.color}"></span>${esc(k)}
     </span>`;
   }).join('');
 
-  const colLabel = viewType==='quarter' ? 'Quarter' : 'Region';
   bar.innerHTML = `
     <div class="filter-group"><span class="filter-label">Team</span>${chipHTML(TEAM_CHIPS,'teams',activeFilters.teams)}</div>
     <div class="filter-group"><span class="filter-label">Status</span>${chipHTML(STATUS_CHIPS,'statuses',activeFilters.statuses)}</div>
-    ${columnKeys.length ? `<div class="filter-group"><span class="filter-label">${colLabel}</span>${colChips}</div>` : ''}
+    ${allRegions.length  ? `<div class="filter-group"><span class="filter-label">Region</span>${colChips(allRegions,'regions',regionStyle)}</div>` : ''}
+    ${allQuarters.length ? `<div class="filter-group"><span class="filter-label">Quarter</span>${colChips(allQuarters,'quarters',quarterStyle)}</div>` : ''}
   `;
   bar.style.display = 'flex';
 }
@@ -738,17 +778,23 @@ function applyFilters() {
     if (!activeFilters.statuses.has(st)) return false;
     const team = f.instance === 'sisid' ? 'sis' : 'eft';
     if (!activeFilters.teams.has(team)) return false;
-    // Region filter only applies to By Region view
-    if (currentView==='region' && activeFilters.regions && activeFilters.regions.size>0) {
+    // Region filter — applies to both views
+    if (activeFilters.regions && activeFilters.regions.size > 0) {
       const fRegions = getFeatureRegions(f);
-      if (!fRegions.some(r => activeFilters.regions.has(r))) return false;
+      if (fRegions.length && !fRegions.some(r => activeFilters.regions.has(r))) return false;
+    }
+    // Quarter filter — applies to both views (features without timeframe always shown)
+    if (activeFilters.quarters && activeFilters.quarters.size > 0) {
+      const q = getFeatureQuarter(f);
+      if (q && !activeFilters.quarters.has(q)) return false;
     }
     return true;
   });
   const result = currentView==='quarter'
     ? buildMatrixByQuarter(filtered, initiatives, objectives)
     : buildMatrix(filtered, initiatives, objectives);
-  buildFilterBar(result.regions, currentView);
+  const colKeys = currentView==='quarter' ? allQuarters : allRegions;
+  buildFilterBar(colKeys, currentView);
   render(result);
   renderUnplaced(result.unplaced);
 }
@@ -827,6 +873,8 @@ async function loadFromSupabase() {
         if (eftData.features.length) {
           const merged = mergeInstanceData(eftData, sisData);
           rawData = merged;
+          discoverColumns(merged.features);
+          saveCache(merged, eftRow.updated_at);
           const d = new Date(eftRow.updated_at);
           document.getElementById('lastSync').textContent = 'Synced '+d.toLocaleString('en-AU',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
           document.getElementById('dataBadge').textContent = 'Eftsure: Live data';
@@ -834,7 +882,8 @@ async function loadFromSupabase() {
           const sisBadge = document.getElementById('sisBadge');
           if (sisData.features.length) { sisBadge.style.display='inline'; } else { sisBadge.style.display='none'; }
           const result = buildMatrix(merged.features, merged.initiatives, merged.objectives);
-          buildFilterBar(result.regions);
+          const colKeys = currentView==='quarter' ? allQuarters : allRegions;
+          buildFilterBar(colKeys, currentView);
           render(result);
           renderUnplaced(result.unplaced);
           return;
@@ -879,6 +928,8 @@ async function doSync() {
     } catch(e) {}
     const merged = mergeInstanceData(eftData, sisData);
     rawData = merged;
+    discoverColumns(merged.features);
+    saveCache(merged, new Date().toISOString());
     const now = new Date();
     document.getElementById('lastSync').textContent = 'Synced '+now.toLocaleString('en-AU',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
     document.getElementById('dataBadge').textContent = 'Live data';
@@ -910,6 +961,24 @@ document.getElementById('syncModal').addEventListener('click', e => {
   if (e.target === document.getElementById('syncModal')) closeSyncModal();
 });
 
+// Show cached data immediately so page is never blank
+(function initFromCache() {
+  const cached = loadCache();
+  if (!cached) return;
+  rawData = cached.data;
+  discoverColumns(rawData.features);
+  if (cached.ts) {
+    const d = new Date(cached.ts);
+    document.getElementById('lastSync').textContent = 'Synced '+d.toLocaleString('en-AU',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
+    document.getElementById('dataBadge').textContent = 'Eftsure: Live data';
+    document.getElementById('dataBadge').className = 'badge badge-live';
+    if (rawData.features.some(f=>f.instance==='sisid'))
+      document.getElementById('sisBadge').style.display='inline';
+  }
+  applyFilters();
+})();
+
+// Silently refresh from Supabase in the background
 loadFromSupabase();
 </script>
 </body>
