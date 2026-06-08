@@ -23,8 +23,10 @@
   .logo { width:28px; height:28px; background:linear-gradient(135deg,#f96a38,#e94e77); border-radius:7px; display:flex; align-items:center; justify-content:center; color:#fff; font-weight:700; font-size:13px; flex-shrink:0; }
   .topnav h1 { font-size:15px; font-weight:600; color:var(--text); }
   .badge { font-size:11px; font-weight:600; padding:3px 9px; border-radius:20px; background:#f3f4f6; color:var(--muted); }
-  .badge-live { background:#dcfce7; color:#15803d; }
-  .badge-seed { background:#fef9c3; color:#854d0e; }
+  .badge-live   { background:#dcfce7; color:#15803d; }
+  .badge-seed   { background:#fef9c3; color:#854d0e; }
+  .badge-db     { background:#f0f4ff; color:#4f46e5; }
+  .badge-static { background:#f5f3ff; color:#7c3aed; }
   .last-sync { font-size:11px; color:var(--muted); }
   .topnav-right { display:flex; align-items:center; gap:8px; }
   .btn { display:inline-flex; align-items:center; gap:5px; border:none; border-radius:7px; padding:6px 13px; font-size:12px; font-weight:500; cursor:pointer; transition:background .15s; white-space:nowrap; }
@@ -55,11 +57,12 @@
 
   tr.obj-row td { font-size:11px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; padding:8px 14px; background:#f3f4f6; border-bottom:1px solid var(--border); color:var(--muted); border-left:4px solid #d1d5db; }
 
-  tr.init-row td { padding:10px 14px; border-bottom:1px solid #f0f1f5; vertical-align:top; }
-  td.init-name { font-size:12px; font-weight:600; color:var(--text); background:#fafbfc; border-right:1px solid var(--border); padding-left:18px; width:220px; }
+  tr.init-row td { padding:5px 10px; border-bottom:none; vertical-align:middle; height:38px; }
+  tr.init-row.last-subrow td { border-bottom:1px solid #f0f1f5; }
+  td.init-name { font-size:12px; font-weight:600; color:var(--text); background:#fafbfc; border-right:1px solid var(--border); padding-left:18px; width:220px; vertical-align:middle; }
   td.region-cell { background:#fff; }
 
-  .cards { display:flex; flex-direction:column; gap:4px; }
+  .cards { display:flex; flex-direction:column; gap:4px; } /* kept for drag-drop compat */
   .card { background:#fafbfc; border:1px solid #e8eaed; border-left:3px solid #e8eaed; border-radius:6px; padding:6px 26px 6px 10px; transition:box-shadow .15s; cursor:pointer; display:flex; align-items:center; gap:6px; min-height:0; }
   .card:hover { box-shadow:0 1px 4px rgba(0,0,0,.08); }
   .card.team-eft { border-left-color:var(--eft); }
@@ -71,16 +74,38 @@
   .health-needs-attention { background:#fef9c3; color:#854d0e; }
   .health-off-track       { background:#fee2e2; color:#dc2626; }
   .card-timeline { font-size:10px; color:#6b7280; background:#f3f4f6; padding:1px 5px; border-radius:4px; white-space:nowrap; }
+  .card-region-badge { font-size:10px; font-weight:500; padding:1px 5px; border-radius:4px; white-space:nowrap; }
+  .card-region-secondary { font-size:10px; font-weight:500; padding:1px 5px; border-radius:4px; white-space:nowrap; border:1px solid; }
   .empty-cell { color:#d1d5db; font-size:11px; }
   .card { cursor: grab; position:relative; }
   .card.dragging { opacity:.35; cursor:grabbing; box-shadow:none; }
-  .card-dismiss { position:absolute; top:6px; right:7px; width:16px; height:16px; border-radius:50%; border:none; background:transparent; color:#9ca3af; font-size:13px; line-height:1; cursor:pointer; display:none; align-items:center; justify-content:center; padding:0; }
+  .card.team-eft { border-left-color:var(--eft) !important; background:#fff8f5; }
+  .card.team-sis { border-left-color:var(--sis) !important; background:#f8f6ff; }
+  .card-dismiss { position:absolute; top:50%; right:7px; transform:translateY(-50%); width:16px; height:16px; border-radius:50%; border:none; background:transparent; color:#9ca3af; font-size:13px; line-height:1; cursor:pointer; display:none; align-items:center; justify-content:center; padding:0; }
   .card:hover .card-dismiss { display:flex; }
   .card-dismiss:hover { background:#fee2e2; color:#dc2626; }
   .region-cell.drag-over { background:#eff6ff; outline:2px dashed #93c5fd; outline-offset:-2px; }
   .region-cell { min-height:48px; }
 
   .no-data { padding:48px 20px; text-align:center; color:var(--muted); font-size:13px; }
+
+  /* Unplaced section */
+  .unplaced-section { margin:0 20px 32px; border:1px solid var(--border); border-radius:10px; overflow:hidden; background:#fff; }
+  .unplaced-summary { padding:12px 16px; font-size:12px; font-weight:600; color:var(--muted); cursor:pointer; list-style:none; display:flex; align-items:center; gap:8px; user-select:none; }
+  .unplaced-summary::-webkit-details-marker { display:none; }
+  .unplaced-summary::before { content:'▸'; font-size:10px; transition:transform .2s; }
+  details[open] .unplaced-summary::before { transform:rotate(90deg); }
+  .unplaced-summary:hover { color:var(--text); }
+  .unplaced-grid { display:flex; flex-wrap:wrap; gap:6px; padding:4px 14px 14px; }
+  .unplaced-card { display:flex; align-items:center; gap:6px; background:#f9fafb; border:1px solid #e8eaed; border-radius:6px; padding:5px 10px; font-size:11px; color:var(--text); max-width:320px; }
+  .unplaced-card .card-name-sm { flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-weight:500; }
+  .unplaced-reason { font-size:10px; color:#9ca3af; background:#f3f4f6; padding:1px 5px; border-radius:4px; white-space:nowrap; flex-shrink:0; }
+
+  /* Tabs */
+  .tabs { background:#fff; border-bottom:1px solid var(--border); padding:0 20px; display:flex; gap:0; }
+  .tab { border:none; background:none; padding:10px 18px; font-size:13px; font-weight:500; color:var(--muted); cursor:pointer; border-bottom:3px solid transparent; margin-bottom:-1px; transition:color .15s; }
+  .tab:hover { color:var(--text); }
+  .tab.tab-active { color:var(--eft); border-bottom-color:var(--eft); }
 
   /* Filter bar */
   .filter-bar { background:#fff; border-bottom:1px solid var(--border); padding:8px 20px; display:flex; align-items:center; gap:16px; flex-wrap:wrap; }
@@ -117,6 +142,7 @@
     <h1>Roadmap</h1>
     <span class="badge">2H 2026</span>
     <span class="badge badge-seed" id="dataBadge">No data</span>
+    <span class="badge badge-static" id="sisBadge" style="display:none">Sis ID: DB</span>
     <span class="last-sync" id="lastSync"></span>
   </div>
   <div class="topnav-right">
@@ -125,16 +151,12 @@
   </div>
 </div>
 
-<div class="legend">
-  <span class="legend-label">Team</span>
-  <span class="legend-item"><span class="ldot" style="background:var(--eft)"></span>EFTsure</span>
-  <span class="legend-item"><span class="ldot" style="background:var(--sis)"></span>Sis ID</span>
-  <span class="legend-label" style="margin-left:8px">Status</span>
-  <span class="legend-item"><span class="ldot" style="background:#60a5fa"></span>Candidate</span>
-  <span class="legend-item"><span class="ldot" style="background:#facc15"></span>Planned</span>
-  <span class="legend-item"><span class="ldot" style="background:#fb923c"></span>In Progress</span>
-  <span class="legend-item"><span class="ldot" style="background:#4ade80"></span>Released</span>
+<div class="tabs">
+  <button id="tab-region"  class="tab tab-active" onclick="switchTab('region')">🗺 By Region</button>
+  <button id="tab-quarter" class="tab"            onclick="switchTab('quarter')">📅 By Quarter</button>
 </div>
+
+<div class="filter-bar" id="filterBar" style="display:none"></div>
 
 <div class="summary-bar" id="summaryBar" style="display:none">
   <span class="sum-chip chip-inprogress" id="cnt-inprog"></span>
@@ -144,23 +166,31 @@
   <span class="sum-chip chip-unplaced"   id="cnt-unplaced" style="display:none"></span>
 </div>
 
-<div class="filter-bar" id="filterBar" style="display:none"></div>
-
 <div class="table-wrap">
   <table id="mainTable">
     <thead id="tableHead"><tr><th class="col-init"></th></tr></thead>
     <tbody id="tableBody"><tr><td class="no-data">Sync from ProductBoard to load data</td></tr></tbody>
   </table>
 </div>
+<div id="unplacedSection"></div>
 
 <script>
 // ── Global state ──
 let rawData = {features:[], initiatives:[], objectives:[]};
+let currentView = 'region'; // 'region' | 'quarter'
 let activeFilters = {
   teams:    new Set(['eft','sis']),
   statuses: new Set(['candidate','planned','inprogress','released']),
-  regions:  new Set() // all regions active by default (empty = no filter)
+  regions:  null,   // populated on first By Region load
+  quarters: null    // populated on first By Quarter load
 };
+
+function switchTab(view) {
+  currentView = view;
+  document.getElementById('tab-region').classList.toggle('tab-active',  view==='region');
+  document.getElementById('tab-quarter').classList.toggle('tab-active', view==='quarter');
+  if (rawData.features.length) applyFilters();
+}
 
 const SUPABASE_URL  = 'https://fpbsjyefnitpplgrwopg.supabase.co';
 const SUPABASE_ANON = 'sb_publishable_QQTrGagpQEdjVyiejGHsDg_56KML78l';
@@ -220,6 +250,105 @@ function getFeatureRegions(f) {
   return [];
 }
 
+// ── Quarter helpers ──
+function quarterStyle(q) {
+  const n = parseInt((q||'Q1').charAt(1));
+  const p = [
+    {color:'#2563eb',bg:'#eff6ff',border:'#bfdbfe'},
+    {color:'#059669',bg:'#ecfdf5',border:'#a7f3d0'},
+    {color:'#ea580c',bg:'#fff7ed',border:'#fed7aa'},
+    {color:'#7c3aed',bg:'#f5f3ff',border:'#ddd6fe'},
+  ];
+  return p[(n-1)%4] || p[0];
+}
+
+function getFeatureQuarter(f) {
+  const fld = f.fields || {};
+  const tf = fld.timeframe || {};
+  const start = tf.startDate || fld.startDate || null;
+  if (!start) return null;
+  const d = new Date(start);
+  if (isNaN(d.getTime())) return null;
+  return `Q${Math.floor(d.getMonth()/3)+1} ${d.getFullYear()}`;
+}
+
+// ── By Quarter matrix ──
+function buildMatrixByQuarter(features, initiatives, objectives) {
+  const INCLUDE = ['candidate','planned','in progress','released'];
+  const objMap = {}, initMap = {};
+  for (const o of (objectives||[])) objMap[o.id] = {id:o.id, name:o.name};
+  for (const i of (initiatives||[])) initMap[i.id] = {id:i.id, name:i.name, objectiveId:i.objectiveId};
+
+  const quarterOrder = [], quarterSet = new Set();
+  const grid = {}, objInits = {};
+  const stats = {candidate:0,planned:0,inprogress:0,released:0,unplaced:0};
+  const unplaced = [];
+
+  for (const f of (features||[])) {
+    const fld = f.fields || {};
+    if (f.type!=='feature'||fld.archived) continue;
+    const status = (fld.status?.name||'').toLowerCase();
+    if (!INCLUDE.includes(status)) continue;
+
+    if (status.includes('in progress')) stats.inprogress++;
+    else if (status==='candidate')      stats.candidate++;
+    else if (status==='planned')        stats.planned++;
+    else if (status==='released')       stats.released++;
+
+    const quarter = getFeatureQuarter(f);
+    if (!quarter) { stats.unplaced++; unplaced.push({name:fld.name||'Untitled', status:fld.status?.name||'', reason:'No Timeframe'}); continue; }
+
+    // Apply quarter filter
+    if (activeFilters.quarters && activeFilters.quarters.size>0 && !activeFilters.quarters.has(quarter)) {
+      continue;
+    }
+
+    const rels = f.relationships?.data || [];
+    const initLinks = rels.filter(r=>r.type==='link'&&r.target?.type==='initiative').map(r=>r.target.id);
+    const featureObjIds = rels.filter(r=>r.type==='link'&&r.target?.type==='objective').map(r=>r.target.id);
+    if (!initLinks.length) { stats.unplaced++; unplaced.push({name:fld.name||'Untitled', status:fld.status?.name||'', reason:'No Initiative'}); continue; }
+
+    if (!quarterSet.has(quarter)) { quarterSet.add(quarter); quarterOrder.push(quarter); }
+
+    const regionLabel = getFeatureRegions(f).join(', ');
+
+    for (const initId of initLinks) {
+      const init = initMap[initId];
+      const objId = init?.objectiveId || featureObjIds[0] || null;
+      if (!objId) continue;
+      if (!grid[objId]) grid[objId] = {};
+      if (!grid[objId][initId]) grid[objId][initId] = {};
+      if (!objInits[objId]) objInits[objId] = [];
+      if (!objInits[objId].includes(initId)) objInits[objId].push(initId);
+      if (!grid[objId][initId][quarter]) grid[objId][initId][quarter] = [];
+      const item = buildItem(f);
+      item.regionLabel = regionLabel;
+      grid[objId][initId][quarter].push(item);
+    }
+  }
+
+  const parse = s => { const [q,y] = s.replace('Q','').split(' '); return +y*4 + +q; };
+  const quarters = [...quarterOrder].sort((a,b) => parse(a)-parse(b));
+
+  const OBJ_COLORS = ['#10b981','#3b82f6','#8b5cf6','#f59e0b','#ec4899','#f97316'];
+  let ci = 0;
+  const rows = [];
+  for (const objId of Object.keys(grid)) {
+    const obj = objMap[objId] || {id:objId, name:'Other'};
+    const color = OBJ_COLORS[ci++%OBJ_COLORS.length];
+    const initRows = [];
+    for (const initId of (objInits[objId]||[])) {
+      if (!grid[objId]?.[initId]) continue;
+      const init = initMap[initId] || {id:initId, name:'–'};
+      const cells = {};
+      for (const q of quarters) cells[q] = grid[objId][initId][q] || [];
+      if (Object.values(cells).some(a=>a.length>0)) initRows.push({init, cells});
+    }
+    if (initRows.length) rows.push({obj, color, inits: initRows});
+  }
+  return {rows, regions: quarters, stats, unplaced, viewType:'quarter'};
+}
+
 // ── Build dynamic matrix from objectives → initiatives ──
 function buildMatrix(features, initiatives, objectives) {
   // Build lookup maps
@@ -234,9 +363,10 @@ function buildMatrix(features, initiatives, objectives) {
   // Discover regions and build grid
   const regionOrder = [];
   const regionSet = new Set();
-  const grid = {};      // objId -> initId -> regionName -> [items]
-  const objInits = {};  // objId -> [initId] ordered by first appearance
+  const grid = {};
+  const objInits = {};
   const stats = {candidate:0, planned:0, inprogress:0, released:0, unplaced:0};
+  const unplaced = [];
 
   for (const f of (features||[])) {
     const fld = f.fields || {};
@@ -255,10 +385,10 @@ function buildMatrix(features, initiatives, objectives) {
     // Feature may directly link to objective too — use as fallback when initiative has no objectiveId
     const featureObjIds = rels.filter(r => r.type==='link' && r.target?.type==='objective').map(r => r.target.id);
 
-    if (!initLinks.length) { stats.unplaced++; continue; }
+    if (!initLinks.length) { stats.unplaced++; unplaced.push({name:fld.name||'Untitled', status:fld.status?.name||'', reason:'No Initiative'}); continue; }
 
     const regions = getFeatureRegions(f);
-    if (!regions.length) { stats.unplaced++; continue; }
+    if (!regions.length) { stats.unplaced++; unplaced.push({name:fld.name||'Untitled', status:fld.status?.name||'', reason:'No Region'}); continue; }
 
     // Register regions
     for (const r of regions) {
@@ -309,15 +439,16 @@ function buildMatrix(features, initiatives, objectives) {
     if (initRows.length) rows.push({obj, color, inits: initRows});
   }
 
-  return {rows, regions, stats};
+  return {rows, regions, stats, unplaced};
 }
 
 function buildItem(f) {
   const fld = f.fields || {};
   const tf = fld.timeframe || {};
   return {
+    id: f.id || (fld.name||'').replace(/\s/g,''),
     name: fld.name || 'Untitled',
-    team: 'eft',
+    team: (f.instance === 'sisid' || f.team === 'sis') ? 'sis' : 'eft',
     status: (fld.status?.name||'').toLowerCase(),
     health: fld.health || null,
     startDate: tf.startDate || fld.startDate || null,
@@ -338,14 +469,14 @@ function healthBadge(h) {
 
 function statusDot(st) {
   const map = {
-    'candidate':  ['#60a5fa','Candidate'],
-    'planned':    ['#facc15','Planned'],
-    'inprogress': ['#fb923c','In Progress'],
-    'released':   ['#4ade80','Released'],
+    'candidate':  ['#3b82f6','Candidate'],
+    'planned':    ['#ca8a04','Planned'],
+    'inprogress': ['#ea580c','In Progress'],
+    'released':   ['#16a34a','Released'],
   };
   const key = (st||'').replace(/ /g,'').toLowerCase();
   const [color, label] = map[key] || ['#9ca3af', st||''];
-  return `<span title="${label}" style="width:7px;height:7px;border-radius:50%;background:${color};display:inline-block;flex-shrink:0"></span>`;
+  return `<span title="${label}" style="width:8px;height:8px;min-width:8px;border-radius:50%;background:${color};display:inline-block;flex-shrink:0;box-shadow:0 0 0 1.5px ${color}33"></span>`;
 }
 
 function timelineBadge(item) {
@@ -367,11 +498,17 @@ function cardHTML(item) {
   const teamCls = item.team==='sis' ? 'team-sis' : 'team-eft';
   const st = (item.status||'').replace(/ /g,'').toLowerCase();
   const health = st!=='released' ? healthBadge(item.health) : '';
-  const timeline = timelineBadge(item);
+  const secondaryBadges = (item.secondaryRegions||[]).map(r => {
+    const s = regionStyle(r);
+    return `<span class="card-region-secondary" style="color:${s.color};border-color:${s.color};background:${s.bg}">${esc(r)}</span>`;
+  }).join('');
+  const meta = currentView==='quarter'
+    ? `${health}${item.regionLabel ? `<span class="card-region-badge">${esc(item.regionLabel)}</span>` : ''}`
+    : `${health}${timelineBadge(item)}${secondaryBadges}`;
   return `<div class="card ${teamCls}" ${item.link?`onclick="window.open('${esc(item.link)}','_blank')"`:''}>
     ${statusDot(item.status)}
     <span class="card-name" title="${esc(item.name)}">${esc(item.name)}</span>
-    <div class="card-meta">${health}${timeline}</div>
+    <div class="card-meta">${meta}</div>
     <button class="card-dismiss" onclick="event.stopPropagation();this.closest('.card').remove()" title="Hide">×</button>
   </div>`;
 }
@@ -381,7 +518,7 @@ function render({rows, regions, stats}) {
   const head = document.getElementById('tableHead');
   let hrow = '<tr><th class="col-init"></th>';
   for (const r of regions) {
-    const s = regionStyle(r);
+    const s = currentView==='quarter' ? quarterStyle(r) : regionStyle(r);
     hrow += `<th style="border-top:3px solid ${s.color};color:${s.color}">${esc(r)}</th>`;
   }
   hrow += '</tr>';
@@ -397,14 +534,37 @@ function render({rows, regions, stats}) {
   for (const {obj, color, inits} of rows) {
     html += `<tr class="obj-row"><td colspan="${regions.length+1}" style="border-left:4px solid ${color};color:${color}">${esc(obj.name)}</td></tr>`;
     for (const {init, cells} of inits) {
-      html += `<tr class="init-row"><td class="init-name" style="border-left:3px solid ${color}">${esc(init.name)}</td>`;
+      // Deduplicate: each feature appears once, in its first matching region column
+      const seen = new Set();
+      const unified = []; // [{item, primaryRegion}]
       for (const r of regions) {
-        const items = cells[r] || [];
-        html += items.length
-          ? `<td class="region-cell"><div class="cards">${items.map(cardHTML).join('')}</div></td>`
-          : `<td class="region-cell"><span class="empty-cell">—</span></td>`;
+        for (const item of (cells[r]||[])) {
+          if (seen.has(item.id)) continue;
+          seen.add(item.id);
+          // Collect all regions this feature appears in
+          item.secondaryRegions = regions.filter(
+            reg => reg !== r && (cells[reg]||[]).some(i => i.id === item.id)
+          );
+          unified.push({item, primaryRegion: r});
+        }
       }
-      html += '</tr>';
+      const maxLen = Math.max(1, unified.length);
+      for (let i = 0; i < maxLen; i++) {
+        const isLast = i === maxLen - 1;
+        const entry = unified[i];
+        if (i === 0) {
+          html += `<tr class="init-row${isLast?' last-subrow':''}">
+            <td class="init-name" rowspan="${maxLen}" style="border-left:3px solid ${color};border-bottom:1px solid #f0f1f5">${esc(init.name)}</td>`;
+        } else {
+          html += `<tr class="init-row${isLast?' last-subrow':''}">`;
+        }
+        for (const r of regions) {
+          html += entry && entry.primaryRegion === r
+            ? `<td class="region-cell">${cardHTML(entry.item)}</td>`
+            : `<td class="region-cell"><span class="empty-cell" style="visibility:hidden">—</span></td>`;
+        }
+        html += '</tr>';
+      }
     }
   }
   body.innerHTML = html;
@@ -416,11 +576,40 @@ function render({rows, regions, stats}) {
     document.getElementById('cnt-planned').textContent    = `${stats.planned} Planned`;
     document.getElementById('cnt-released').textContent   = `${stats.released} Released`;
     const up = document.getElementById('cnt-unplaced');
-    if (stats.unplaced) { up.textContent=`${stats.unplaced} No Initiative`; up.style.display='inline-flex'; }
-    else up.style.display = 'none';
+    if (stats.unplaced) {
+      const label = currentView==='quarter' ? 'No Timeframe' : 'No Initiative';
+      up.textContent=`${stats.unplaced} ${label}`; up.style.display='inline-flex';
+    } else up.style.display = 'none';
   }
   // Enable drag and drop after render
   initDragDrop();
+}
+
+function renderUnplaced(unplaced) {
+  const el = document.getElementById('unplacedSection');
+  if (!el) return;
+  if (!unplaced || !unplaced.length) { el.innerHTML = ''; return; }
+
+  const statusDotHTML = st => {
+    const map = {'candidate':'#3b82f6','planned':'#ca8a04','in progress':'#ea580c','released':'#16a34a'};
+    const col = map[(st||'').toLowerCase()] || '#9ca3af';
+    return `<span style="width:7px;height:7px;min-width:7px;border-radius:50%;background:${col};display:inline-block"></span>`;
+  };
+
+  const cards = unplaced.map(f => `
+    <div class="unplaced-card" title="${esc(f.name)}">
+      ${statusDotHTML(f.status)}
+      <span class="card-name-sm">${esc(f.name)}</span>
+      <span class="unplaced-reason">${esc(f.reason)}</span>
+    </div>`).join('');
+
+  el.innerHTML = `
+    <details class="unplaced-section">
+      <summary class="unplaced-summary">
+        <span style="color:var(--muted)">${unplaced.length} unmapped feature${unplaced.length!==1?'s':''}</span>
+      </summary>
+      <div class="unplaced-grid">${cards}</div>
+    </details>`;
 }
 
 // ── Drag and drop ──
@@ -485,52 +674,59 @@ const TEAM_CHIPS = [
   {key:'sis', label:'Sis ID',  color:'#7c3aed', bg:'#f5f3ff'},
 ];
 
-function buildFilterBar(regions) {
+function buildFilterBar(columnKeys, viewType) {
   const bar = document.getElementById('filterBar');
   if (!bar) return;
+  viewType = viewType || currentView;
+
+  // Initialise the appropriate column filter set
+  const colFilterKey = viewType==='quarter' ? 'quarters' : 'regions';
+  if (activeFilters[colFilterKey] === null) {
+    activeFilters[colFilterKey] = new Set(columnKeys);
+  } else {
+    columnKeys.forEach(k => { if (!activeFilters[colFilterKey].has(k)) activeFilters[colFilterKey].add(k); });
+  }
 
   const chipHTML = (chips, filterKey, activeSet) => chips.map(c => {
     const on = activeSet.has(c.key);
-    const style = on
-      ? `background:${c.bg};color:${c.color};border-color:${c.color}`
-      : '';
+    const style = on ? `background:${c.bg};color:${c.color};border-color:${c.color}` : '';
     return `<span class="filter-chip${on?' active':''}" style="${style}"
-      onclick="toggleFilter('${filterKey}','${c.key}',this,'${c.color}','${c.bg}')"
-      data-key="${c.key}">
+      onclick="toggleFilter('${filterKey}','${c.key}',this,'${c.color}','${c.bg}')">
       <span class="ldot" style="background:${c.color}"></span>${c.label}
     </span>`;
   }).join('');
 
-  const regionChips = regions.map(r => {
-    const s = regionStyle(r);
-    const on = activeFilters.regions.size === 0 || activeFilters.regions.has(r);
+  const colChips = columnKeys.map(k => {
+    const s = viewType==='quarter' ? quarterStyle(k) : regionStyle(k);
+    const on = activeFilters[colFilterKey].has(k);
     const style = on ? `background:${s.bg};color:${s.color};border-color:${s.color}` : '';
     return `<span class="filter-chip${on?' active':''}" style="${style}"
-      onclick="toggleRegion('${esc(r)}',this,'${s.color}','${s.bg}')"
-      data-region="${esc(r)}">
-      <span class="ldot" style="background:${s.color}"></span>${esc(r)}
+      onclick="toggleFilter('${colFilterKey}','${k.replace(/'/g,"\\'")}',this,'${s.color}','${s.bg}')">
+      <span class="ldot" style="background:${s.color}"></span>${esc(k)}
     </span>`;
   }).join('');
 
+  const colLabel = viewType==='quarter' ? 'Quarter' : 'Region';
   bar.innerHTML = `
     <div class="filter-group"><span class="filter-label">Team</span>${chipHTML(TEAM_CHIPS,'teams',activeFilters.teams)}</div>
     <div class="filter-group"><span class="filter-label">Status</span>${chipHTML(STATUS_CHIPS,'statuses',activeFilters.statuses)}</div>
-    ${regions.length ? `<div class="filter-group"><span class="filter-label">Region</span>${regionChips}</div>` : ''}
+    ${columnKeys.length ? `<div class="filter-group"><span class="filter-label">${colLabel}</span>${colChips}</div>` : ''}
   `;
   bar.style.display = 'flex';
 }
 
+// Single toggle handler — same logic for all filter types
 function toggleFilter(filterKey, key, el, color, bg) {
   const set = activeFilters[filterKey];
-  if (set.has(key)) { set.delete(key); el.classList.remove('active'); el.style.cssText=''; }
-  else { set.add(key); el.classList.add('active'); el.style.cssText=`background:${bg};color:${color};border-color:${color}`; }
-  applyFilters();
-}
-
-function toggleRegion(region, el, color, bg) {
-  const set = activeFilters.regions;
-  if (set.has(region)) { set.delete(region); el.classList.remove('active'); el.style.cssText=''; }
-  else { set.add(region); el.classList.add('active'); el.style.cssText=`background:${bg};color:${color};border-color:${color}`; }
+  if (set.has(key)) {
+    set.delete(key);
+    el.classList.remove('active');
+    el.style.cssText = '';
+  } else {
+    set.add(key);
+    el.classList.add('active');
+    el.style.cssText = `background:${bg};color:${color};border-color:${color}`;
+  }
   applyFilters();
 }
 
@@ -538,20 +734,23 @@ function applyFilters() {
   const {features, initiatives, objectives} = rawData;
   const filtered = features.filter(f => {
     const fld = f.fields || {};
-    // Status filter
     const st = (fld.status?.name||'').replace(/ /g,'').toLowerCase();
     if (!activeFilters.statuses.has(st)) return false;
-    // Team filter (based on instance field if present, default 'eft')
     const team = f.instance === 'sisid' ? 'sis' : 'eft';
     if (!activeFilters.teams.has(team)) return false;
-    // Region filter (empty set = all regions)
-    if (activeFilters.regions.size > 0) {
+    // Region filter only applies to By Region view
+    if (currentView==='region' && activeFilters.regions && activeFilters.regions.size>0) {
       const fRegions = getFeatureRegions(f);
       if (!fRegions.some(r => activeFilters.regions.has(r))) return false;
     }
     return true;
   });
-  render(buildMatrix(filtered, initiatives, objectives));
+  const result = currentView==='quarter'
+    ? buildMatrixByQuarter(filtered, initiatives, objectives)
+    : buildMatrix(filtered, initiatives, objectives);
+  buildFilterBar(result.regions, currentView);
+  render(result);
+  renderUnplaced(result.unplaced);
 }
 
 // ── Parse payload from Supabase or Sync response ──
@@ -565,6 +764,54 @@ function parsePayload(raw) {
   };
 }
 
+// ── Merge Eftsure + Sis ID data (name-based initiative/objective matching) ──
+function mergeInstanceData(eftData, sisData) {
+  // Build name→id maps from Eftsure (canonical)
+  const objNameToId = {};
+  for (const o of (eftData.objectives||[])) objNameToId[o.name.toLowerCase().trim()] = o.id;
+  const initNameToId = {};
+  for (const i of (eftData.initiatives||[])) initNameToId[i.name.toLowerCase().trim()] = i.id;
+
+  // Remap Sis ID feature relationships to Eftsure IDs via name matching
+  const remapped = (sisData.features||[]).map(f => {
+    const newRels = (f.relationships?.data||[]).map(r => {
+      if (r.type==='link' && r.target?.type==='initiative') {
+        const sisInit = (sisData.initiatives||[]).find(i=>i.id===r.target.id);
+        if (sisInit) {
+          const eftId = initNameToId[sisInit.name.toLowerCase().trim()];
+          if (eftId) return {...r, target:{...r.target, id:eftId}};
+        }
+      }
+      if (r.type==='link' && r.target?.type==='objective') {
+        const sisObj = (sisData.objectives||[]).find(o=>o.id===r.target.id);
+        if (sisObj) {
+          const eftId = objNameToId[sisObj.name.toLowerCase().trim()];
+          if (eftId) return {...r, target:{...r.target, id:eftId}};
+        }
+      }
+      return r;
+    });
+    return {...f, relationships:{data:newRels}, instance:'sisid'};
+  });
+
+  // Add Sis initiatives/objectives not already in Eftsure (new rows)
+  const extraInits = (sisData.initiatives||[]).filter(si =>
+    !initNameToId[si.name.toLowerCase().trim()]
+  ).map(si => {
+    const eftObjId = objNameToId[((sisData.objectives||[]).find(o=>o.id===si.objectiveId)?.name||'').toLowerCase().trim()];
+    return {...si, objectiveId: eftObjId || si.objectiveId};
+  });
+  const extraObjs = (sisData.objectives||[]).filter(so =>
+    !objNameToId[so.name.toLowerCase().trim()]
+  );
+
+  return {
+    features: [...(eftData.features||[]), ...remapped],
+    initiatives: [...(eftData.initiatives||[]), ...extraInits],
+    objectives: [...(eftData.objectives||[]), ...extraObjs]
+  };
+}
+
 // ── Supabase load ──
 async function loadFromSupabase() {
   try {
@@ -572,18 +819,24 @@ async function loadFromSupabase() {
       {headers:{apikey:SUPABASE_ANON,Authorization:'Bearer '+SUPABASE_ANON}});
     const rows = await res.json();
     if (Array.isArray(rows) && rows.length) {
-      const row = rows.find(r=>r.instance==='eftsure') || rows[0];
-      if (row?.features) {
-        const {features, initiatives, objectives} = parsePayload(row.features);
-        if (features.length) {
-          rawData = {features, initiatives, objectives};
-          const d = new Date(row.updated_at);
+      const eftRow = rows.find(r=>r.instance==='eftsure');
+      const sisRow = rows.find(r=>r.instance==='sisid');
+      if (eftRow?.features) {
+        const eftData = parsePayload(eftRow.features);
+        const sisData = sisRow?.features ? parsePayload(sisRow.features) : {features:[],initiatives:[],objectives:[]};
+        if (eftData.features.length) {
+          const merged = mergeInstanceData(eftData, sisData);
+          rawData = merged;
+          const d = new Date(eftRow.updated_at);
           document.getElementById('lastSync').textContent = 'Synced '+d.toLocaleString('en-AU',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
-          document.getElementById('dataBadge').textContent = 'Live data';
+          document.getElementById('dataBadge').textContent = 'Eftsure: Live data';
           document.getElementById('dataBadge').className = 'badge badge-live';
-          const result = buildMatrix(features, initiatives, objectives);
+          const sisBadge = document.getElementById('sisBadge');
+          if (sisData.features.length) { sisBadge.style.display='inline'; } else { sisBadge.style.display='none'; }
+          const result = buildMatrix(merged.features, merged.initiatives, merged.objectives);
           buildFilterBar(result.regions);
           render(result);
+          renderUnplaced(result.unplaced);
           return;
         }
       }
@@ -615,13 +868,22 @@ async function doSync() {
     const result = await res.json();
     if (result.error) throw new Error(result.error);
 
-    const {features, initiatives, objectives} = parsePayload(result);
-    rawData = {features, initiatives, objectives};
+    const eftData = parsePayload(result);
+    // Re-fetch Sis ID row so it survives the sync
+    let sisData = {features:[],initiatives:[],objectives:[]};
+    try {
+      const sr = await fetch(`${SUPABASE_URL}/rest/v1/roadmap_cache?instance=eq.sisid&select=features`,
+        {headers:{apikey:SUPABASE_ANON,Authorization:'Bearer '+SUPABASE_ANON}});
+      const srows = await sr.json();
+      if (Array.isArray(srows)&&srows[0]?.features) sisData = parsePayload(srows[0].features);
+    } catch(e) {}
+    const merged = mergeInstanceData(eftData, sisData);
+    rawData = merged;
     const now = new Date();
     document.getElementById('lastSync').textContent = 'Synced '+now.toLocaleString('en-AU',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
     document.getElementById('dataBadge').textContent = 'Live data';
     document.getElementById('dataBadge').className = 'badge badge-live';
-    const matResult = buildMatrix(features, initiatives, objectives);
+    const matResult = buildMatrix(merged.features, merged.initiatives, merged.objectives);
     buildFilterBar(matResult.regions);
     render(matResult);
 
