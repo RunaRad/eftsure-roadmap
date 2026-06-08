@@ -92,6 +92,24 @@
 
   .no-data { padding:48px 20px; text-align:center; color:var(--muted); font-size:13px; }
 
+  /* Help modal */
+  .help-btn { width:26px; height:26px; border-radius:50%; border:1.5px solid var(--border); background:#f9fafb; color:var(--muted); font-size:13px; font-weight:700; cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .help-btn:hover { background:var(--eft); color:#fff; border-color:var(--eft); }
+  .help-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.45); z-index:300; align-items:center; justify-content:center; }
+  .help-overlay.visible { display:flex; }
+  .help-modal { background:#fff; border-radius:14px; padding:28px 32px; width:560px; max-width:95vw; max-height:85vh; overflow-y:auto; box-shadow:0 24px 64px rgba(0,0,0,.18); }
+  .help-modal h2 { font-size:16px; font-weight:700; color:var(--text); margin-bottom:4px; }
+  .help-modal .help-sub { font-size:12px; color:var(--muted); margin-bottom:20px; }
+  .help-section { margin-bottom:18px; }
+  .help-section h3 { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); margin-bottom:8px; }
+  .help-section ul { list-style:none; padding:0; display:flex; flex-direction:column; gap:5px; }
+  .help-section li { font-size:12px; color:#374151; display:flex; gap:8px; line-height:1.5; }
+  .help-section li::before { content:''; width:5px; height:5px; border-radius:50%; background:var(--eft); flex-shrink:0; margin-top:5px; }
+  .help-section li b { color:var(--text); }
+  .help-close { display:block; margin:4px 0 0 auto; font-size:12px; color:var(--muted); background:none; border:none; cursor:pointer; }
+  .help-close:hover { color:var(--text); }
+  .help-divider { border:none; border-top:1px solid var(--border); margin:14px 0; }
+
   /* Unplaced section */
   .unplaced-section { margin:0 20px 32px; border:1px solid var(--border); border-radius:10px; overflow:hidden; background:#fff; }
   .unplaced-summary { padding:12px 16px; font-size:12px; font-weight:600; color:var(--muted); cursor:pointer; list-style:none; display:flex; align-items:center; gap:8px; user-select:none; }
@@ -130,6 +148,57 @@
 </head>
 <body>
 
+<!-- Help modal -->
+<div class="help-overlay" id="helpOverlay">
+  <div class="help-modal">
+    <h2>📖 Roadmap Guide</h2>
+    <p class="help-sub">Eftsure + Sis ID · 2026 · Powered by ProductBoard</p>
+
+    <div class="help-section">
+      <h3>Views</h3>
+      <ul>
+        <li><b>By Region</b> — columns show ANZ, US & Global, Europe. Features appear once with secondary region badges.</li>
+        <li><b>By Quarter</b> — columns show quarters (Q1–Q4). Cards display region badge instead of timeline.</li>
+      </ul>
+    </div>
+    <hr class="help-divider">
+    <div class="help-section">
+      <h3>Filters</h3>
+      <ul>
+        <li><b>Team</b> — toggle EFTsure (orange) or Sis ID (purple) on/off.</li>
+        <li><b>Status</b> — filter by Candidate, Planned, In Progress, Released.</li>
+        <li><b>Region</b> — show only features in selected regions. Works in both tabs.</li>
+        <li><b>Quarter</b> — show only features with a timeframe in selected quarters. Features without a timeframe always show.</li>
+        <li>Click any chip to deactivate; click again to restore.</li>
+      </ul>
+    </div>
+    <hr class="help-divider">
+    <div class="help-section">
+      <h3>Cards</h3>
+      <ul>
+        <li><b>Click</b> a card to open the feature directly in ProductBoard.</li>
+        <li><b>Drag</b> up/down to reorder, or across columns to reassign region/quarter (session only).</li>
+        <li><b>× button</b> (hover to reveal) hides a card. <b>Refresh restores all hidden cards.</b></li>
+        <li><b>Status dot</b> — blue = Candidate · amber = Planned · orange = In Progress · green = Released.</li>
+        <li><b>Health badge</b> — ● On track · ⚠ At risk · ✖ Off track (In Progress features only).</li>
+        <li><b>Border colour</b> — orange = EFTsure · purple = Sis ID.</li>
+      </ul>
+    </div>
+    <hr class="help-divider">
+    <div class="help-section">
+      <h3>Data & Sync</h3>
+      <ul>
+        <li><b>↻ Refresh</b> — reloads the latest saved data from the database. Fast, no ProductBoard API call.</li>
+        <li><b>⇄ Sync</b> — fetches fresh data from ProductBoard, saves to database, updates the view. Run after updating features in PB.</li>
+        <li><b>Eftsure: Live data</b> — EFTsure features are live-synced from ProductBoard.</li>
+        <li><b>Sis ID: DB</b> — Sis ID features are manually maintained in the database.</li>
+        <li><b>Unmapped features</b> — collapsible section at the bottom lists features missing an initiative or timeframe in ProductBoard.</li>
+      </ul>
+    </div>
+    <button class="help-close" onclick="document.getElementById('helpOverlay').classList.remove('visible')">Close ✕</button>
+  </div>
+</div>
+
 <div class="modal-overlay" id="syncModal">
   <div class="modal">
     <div class="modal-icon" id="syncIcon">⇄</div>
@@ -150,6 +219,7 @@
     <span class="last-sync" id="lastSync"></span>
   </div>
   <div class="topnav-right">
+    <button class="help-btn" onclick="document.getElementById('helpOverlay').classList.add('visible')" title="Guide">?</button>
     <button class="btn btn-secondary" id="refreshBtn" onclick="refresh()">↻ Refresh</button>
     <button class="btn btn-primary" onclick="openSync()">⇄ Sync</button>
   </div>
@@ -962,6 +1032,9 @@ async function refresh() {
 
 document.getElementById('syncModal').addEventListener('click', e => {
   if (e.target === document.getElementById('syncModal')) closeSyncModal();
+});
+document.getElementById('helpOverlay').addEventListener('click', e => {
+  if (e.target === document.getElementById('helpOverlay')) document.getElementById('helpOverlay').classList.remove('visible');
 });
 
 // Show cached data immediately so page is never blank
