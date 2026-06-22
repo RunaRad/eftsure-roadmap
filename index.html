@@ -122,11 +122,12 @@
   .unplaced-card .card-name-sm { flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-weight:500; }
   .unplaced-reason { font-size:10px; color:#9ca3af; background:#f3f4f6; padding:1px 5px; border-radius:4px; white-space:nowrap; flex-shrink:0; }
 
-  /* Tabs */
-  .tabs { background:#fff; border-top:1px solid var(--border); padding:0 20px; display:flex; gap:0; }
-  .tab { border:none; background:none; padding:10px 18px; font-size:13px; font-weight:500; color:var(--muted); cursor:pointer; border-bottom:3px solid transparent; margin-bottom:-1px; transition:color .15s; }
-  .tab:hover { color:var(--text); }
-  .tab.tab-active { color:var(--eft); border-bottom-color:var(--eft); }
+  /* View selector */
+  .view-selector { background:#fff; border-top:1px solid var(--border); padding:8px 20px; display:flex; align-items:center; gap:8px; }
+  .view-label { font-size:11px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.04em; }
+  .view-select { font-size:13px; font-weight:500; border:1.5px solid var(--border); border-radius:7px; padding:5px 32px 5px 10px; background:#f9fafb; color:var(--text); cursor:pointer; appearance:none; -webkit-appearance:none; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2.5'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 10px center; transition:border-color .15s; }
+  .view-select:focus { outline:none; border-color:var(--eft); }
+  .view-select:hover { border-color:#9ca3af; }
 
   /* Filter bar */
   .filter-bar { background:#fff; border-bottom:1px solid var(--border); padding:8px 20px; display:flex; align-items:center; gap:16px; flex-wrap:wrap; }
@@ -159,6 +160,7 @@
       <ul>
         <li><b>By Region</b> — columns show ANZ, US & Global, Europe. Features appear once with secondary region badges.</li>
         <li><b>By Quarter</b> — columns show quarters (Q1–Q4). Cards display region badge instead of timeline.</li>
+        <li><b>By Status</b> — columns show Candidate, Planned, In Progress, Released. Cards display region and timeline.</li>
       </ul>
     </div>
     <hr class="help-divider">
@@ -225,9 +227,13 @@
   </div>
 </div>
 
-<div class="tabs">
-  <button id="tab-region"  class="tab tab-active" onclick="switchTab('region')">🗺 By Region</button>
-  <button id="tab-quarter" class="tab"            onclick="switchTab('quarter')">📅 By Quarter</button>
+<div class="view-selector">
+  <span class="view-label">View</span>
+  <select class="view-select" id="viewSelect" onchange="switchView(this.value)">
+    <option value="region">🗺 By Region</option>
+    <option value="quarter">📅 By Quarter</option>
+    <option value="status">📊 By Status</option>
+  </select>
 </div>
 
 <div class="filter-bar" id="filterBar" style="display:none"></div>
@@ -253,7 +259,7 @@
 <script>
 // ── Global state ──
 let rawData = {features:[], initiatives:[], objectives:[]};
-let currentView = 'region'; // 'region' | 'quarter'
+let currentView = 'region'; // 'region' | 'quarter' | 'status'
 let allRegions  = [];  // all regions discovered from full dataset
 let allQuarters = [];  // all quarters discovered from full dataset
 let activeFilters = {
@@ -296,10 +302,9 @@ function loadCache() {
   return null;
 }
 
-function switchTab(view) {
+function switchView(view) {
   currentView = view;
-  document.getElementById('tab-region').classList.toggle('tab-active',  view==='region');
-  document.getElementById('tab-quarter').classList.toggle('tab-active', view==='quarter');
+  document.getElementById('viewSelect').value = view;
   if (rawData.features.length) applyFilters();
 }
 
@@ -388,6 +393,88 @@ function getFeatureQuarter(f) {
   const d = new Date(start);
   if (isNaN(d.getTime())) return null;
   return `Q${Math.floor(d.getMonth()/3)+1} ${d.getFullYear()}`;
+}
+
+// ── Status view helpers ──
+const STATUS_COLS   = ['candidate','planned','in progress','released'];
+const STATUS_LABELS = {'candidate':'Candidate','planned':'Planned','in progress':'In Progress','released':'Released'};
+function statusStyle(s) {
+  const map = {
+    'candidate':   {color:'#2563eb', bg:'#eff6ff', border:'#bfdbfe'},
+    'planned':     {color:'#ca8a04', bg:'#fef9c3', border:'#fde68a'},
+    'in progress': {color:'#ea580c', bg:'#fff7ed', border:'#fed7aa'},
+    'released':    {color:'#16a34a', bg:'#f0fdf4', border:'#a7f3d0'},
+  };
+  return map[s] || {color:'#6b7280', bg:'#f3f4f6', border:'#e5e7eb'};
+}
+
+// ── By Status matrix ──
+function buildMatrixByStatus(features, initiatives, objectives) {
+  const INCLUDE = ['candidate','planned','in progress','released'];
+  const objMap = {}, initMap = {};
+  for (const o of (objectives||[])) objMap[o.id] = {id:o.id, name:o.name};
+  for (const i of (initiatives||[])) initMap[i.id] = {id:i.id, name:i.name, objectiveId:i.objectiveId};
+
+  const grid = {}, objInits = {};
+  const stats = {candidate:0, planned:0, inprogress:0, released:0, unplaced:0};
+  const unplaced = [];
+
+  for (const f of (features||[])) {
+    const fld = f.fields || {};
+    if (f.type !== 'feature' || fld.archived) continue;
+    const statusRaw = (fld.status?.name||'').toLowerCase();
+    if (!INCLUDE.includes(statusRaw)) continue;
+
+    if (statusRaw.includes('in progress')) stats.inprogress++;
+    else if (statusRaw === 'candidate')    stats.candidate++;
+    else if (statusRaw === 'planned')      stats.planned++;
+    else if (statusRaw === 'released')     stats.released++;
+
+    const rels = f.relationships?.data || [];
+    const initLinks    = rels.filter(r=>r.type==='link'&&r.target?.type==='initiative').map(r=>r.target.id);
+    const featureObjIds= rels.filter(r=>r.type==='link'&&r.target?.type==='objective').map(r=>r.target.id);
+
+    if (!initLinks.length) {
+      stats.unplaced++;
+      unplaced.push({name:fld.name||'Untitled', status:fld.status?.name||'', reason:'No Initiative'});
+      continue;
+    }
+
+    const regionLabel = getFeatureRegions(f).join(', ');
+
+    for (const initId of initLinks) {
+      const init = initMap[initId];
+      const objId = init?.objectiveId || featureObjIds[0] || null;
+      if (!objId) continue;
+      if (!grid[objId]) grid[objId] = {};
+      if (!grid[objId][initId]) grid[objId][initId] = {};
+      if (!objInits[objId]) objInits[objId] = [];
+      if (!objInits[objId].includes(initId)) objInits[objId].push(initId);
+      if (!grid[objId][initId][statusRaw]) grid[objId][initId][statusRaw] = [];
+      const item = buildItem(f);
+      item.regionLabel = regionLabel;
+      grid[objId][initId][statusRaw].push(item);
+    }
+  }
+
+  const OBJ_COLORS = ['#10b981','#3b82f6','#8b5cf6','#f59e0b','#ec4899','#f97316'];
+  let ci = 0;
+  const rows = [];
+  for (const objId of Object.keys(grid)) {
+    const obj = objMap[objId] || {id:objId, name:'Other'};
+    const color = OBJ_COLORS[ci++%OBJ_COLORS.length];
+    const initRows = [];
+    for (const initId of (objInits[objId]||[])) {
+      if (!grid[objId]?.[initId]) continue;
+      const init = initMap[initId] || {id:initId, name:'–'};
+      const cells = {};
+      for (const s of STATUS_COLS) cells[s] = grid[objId][initId][s] || [];
+      if (Object.values(cells).some(a=>a.length>0)) initRows.push({init, cells});
+    }
+    if (initRows.length) rows.push({obj, color, inits: initRows});
+  }
+  rows.sort((a,b) => objSortKey(a.obj.name) - objSortKey(b.obj.name));
+  return {rows, regions: STATUS_COLS, stats, unplaced, viewType:'status'};
 }
 
 // ── By Quarter matrix ──
@@ -623,6 +710,8 @@ function cardHTML(item) {
   }).join('');
   const meta = currentView==='quarter'
     ? `${health}${item.regionLabel ? `<span class="card-region-badge">${esc(item.regionLabel)}</span>` : ''}`
+    : currentView==='status'
+    ? `${health}${item.regionLabel ? `<span class="card-region-badge">${esc(item.regionLabel)}</span>` : ''}${timelineBadge(item)}`
     : `${health}${timelineBadge(item)}${secondaryBadges}`;
   return `<div class="card ${teamCls}" ${item.link?`onclick="window.open('${esc(item.link)}','_blank')"`:''}>
     ${statusDot(item.status)}
@@ -637,8 +726,9 @@ function render({rows, regions, stats}) {
   const head = document.getElementById('tableHead');
   let hrow = '<tr><th class="col-init"></th>';
   for (const r of regions) {
-    const s = currentView==='quarter' ? quarterStyle(r) : regionStyle(r);
-    hrow += `<th style="border-top:3px solid ${s.color};color:${s.color}">${esc(r)}</th>`;
+    const s = currentView==='quarter' ? quarterStyle(r) : currentView==='status' ? statusStyle(r) : regionStyle(r);
+    const label = currentView==='status' ? (STATUS_LABELS[r] || r) : r;
+    hrow += `<th style="border-top:3px solid ${s.color};color:${s.color}">${esc(label)}</th>`;
   }
   hrow += '</tr>';
   head.innerHTML = hrow;
@@ -865,8 +955,10 @@ function applyFilters() {
   });
   const result = currentView==='quarter'
     ? buildMatrixByQuarter(filtered, initiatives, objectives)
+    : currentView==='status'
+    ? buildMatrixByStatus(filtered, initiatives, objectives)
     : buildMatrix(filtered, initiatives, objectives);
-  const colKeys = currentView==='quarter' ? allQuarters : allRegions;
+  const colKeys = currentView==='quarter' ? allQuarters : currentView==='status' ? STATUS_COLS : allRegions;
   buildFilterBar(colKeys, currentView);
   render(result);
   renderUnplaced(result.unplaced);
