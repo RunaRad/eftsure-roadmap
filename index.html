@@ -1130,8 +1130,8 @@ function buildRankedList() {
     const initName = initId ? (initMap[initId]?.name||'–') : '–';
     const objName  = objId  ? (objMap[objId]||'–') : '–';
     rows += `<tr data-fid="${esc(f.id)}">
-      <td style="width:28px;text-align:center;color:#9ca3af;font-size:11px;font-weight:600"><span class="rank-num">${idx+1}</span></td>
-      <td style="min-width:200px;font-weight:500;display:flex;align-items:center;gap:6px">${teamDot}${nameEl}</td>
+      <td style="width:20px;text-align:center;color:#9ca3af;font-size:11px;font-weight:600;padding:7px 4px"><span class="rank-num">${idx+1}</span></td>
+      <td style="min-width:260px;max-width:320px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"><span style="display:inline-flex;align-items:center;gap:6px">${teamDot}${nameEl}</span></td>
       <td style="font-size:11px;color:var(--muted);max-width:130px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${esc(objName)}">${esc(objName)}</td>
       <td style="font-size:11px;color:var(--muted);max-width:130px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${esc(initName)}">${esc(initName)}</td>
       <td style="text-align:center" title="${esc(fld.status?.name||'')}"><span style="width:8px;height:8px;border-radius:50%;background:${stColor};display:inline-block"></span></td>
@@ -1147,8 +1147,8 @@ function buildRankedList() {
   });
 
   document.getElementById('tableHead').innerHTML = `<tr>
-    <th style="width:28px">#</th>
-    <th>Feature</th>
+    <th style="width:20px;padding:9px 4px">#</th>
+    <th style="min-width:260px">Feature</th>
     <th>Objective</th>
     <th>Initiative</th>
     <th style="width:38px" title="Status">St.</th>
